@@ -1,5 +1,5 @@
 CC = gcc
-CFLAGS = -Wall -Wextra -fsanitize=address
+CFLAGS = -Wall -Wextra
 # LDLIBS = -lSDL2 -lSDL2_image -lm
 
 OBJECTS = main.o
