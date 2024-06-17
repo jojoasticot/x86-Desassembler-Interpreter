@@ -1,6 +1,13 @@
 #ifndef main_h
 #define main_h
 
+// Global variable
+
+extern uint16_t registers[8];
+extern uint8_t * text;
+extern uint8_t * data;
+extern uint32_t PC;
+
 // Bit mask functions:
 
 #define BM4(x) (x & 0b11110000)
