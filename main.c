@@ -860,22 +860,14 @@ void special4(uint8_t current, uint32_t * i)
     }
 }
 
-int main(int argc, char* argv[])
+void read_file(FILE* file, uint32_t* text_length, uint32_t* data_length)
 {
-    if (argc < 2)
-        errx(1, "Argument missing: ./main <a.out>");
-
-    char * filename = argv[1];
-    FILE* file = fopen(filename, "r");
-
     uint32_t header;
-    uint32_t text_length;
-    uint32_t data_length;
     fread(&header, sizeof(header), 1, file);
     fread(&header, sizeof(header), 1, file);
 
-    fread(&text_length, sizeof(text_length), 1, file);
-    fread(&data_length, sizeof(data_length), 1, file);
+    fread(text_length, sizeof(text_length), 1, file);
+    fread(data_length, sizeof(data_length), 1, file);
 
     fread(&header, sizeof(header), 1, file);
     fread(&header, sizeof(header), 1, file);
@@ -884,24 +876,41 @@ int main(int argc, char* argv[])
     fread(&header, sizeof(header), 1, file);
     // read useless data (ez)
 
-    uint8_t current;
     printf("size: %d\n", text_length);
-    text = malloc(text_length * sizeof(uint8_t));
-    data = malloc(data_length * sizeof(uint8_t));
+    text = malloc(*text_length * sizeof(uint8_t));
+    data = malloc(*data_length * sizeof(uint8_t));
 
-    for (uint32_t i = 0; i < text_length; i++)
+    uint8_t current;
+
+    for (uint32_t i = 0; i < *text_length; i++)
     {
         fread(&current, sizeof(current), 1, file);
         text[i] = current;
     }
 
-    for (uint32_t i = 0; i < data_length; i++)
+    for (uint32_t i = 0; i < *data_length; i++)
     {
         fread(&current, sizeof(current), 1, file);
         data[i] = current;
     }
 
+}
+
+int main(int argc, char* argv[])
+{
+    if (argc < 2)
+        errx(1, "Argument missing: ./main <a.out>");
+
+    char * filename = argv[1];
+    FILE* file = fopen(filename, "r");
+
+    uint32_t text_length;
+    uint32_t data_length;
+    
+    read_file(file, &text_length, &data_length);
+
     uint32_t i;
+    uint8_t current;
     operation * op;
 
     for (i = 0; i < text_length - 1; i++)
