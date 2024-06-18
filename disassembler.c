@@ -6,11 +6,6 @@
 #include "main.h"
 #include "operation.h"
 
-char* registers_name[2][8] = {
-    {"al", "cl", "dl", "bl", "ah", "ch", "dh", "bh"},
-    {"ax", "cx", "dx", "bx", "sp", "bp", "si", "di"},
-};
-
 void pretty_print(uint8_t* bytes, int size, char* op)
 {
     char concatenated[2 * size + 1]; 
@@ -310,6 +305,7 @@ operation * mod_reg_rm(char* op_name, uint8_t current, int d, int w)
     default:
         break;
     }
+    return op;
 }
 
 operation * w_mod_reg_rm(char* op_name, uint8_t current)
@@ -932,6 +928,7 @@ void disassembler(uint32_t text_length, uint32_t data_length)
     for (PC = 0; PC < text_length - 1; PC++)
     {
         current = text[PC];
+        op = NULL;
         printf("%04x, %02x ", PC, current);
         if (BM7(current) == SPECIAL1)
             op = special1(current);
@@ -1082,6 +1079,11 @@ void disassembler(uint32_t text_length, uint32_t data_length)
             mem_acc("mov", current, 1);
         else
             printf("undefined\n");
+
+        if (op != NULL)
+        {
+            print_operation(op);
+        }
     }
 
     if (PC == text_length - 1)

@@ -42,4 +42,6 @@ typedef struct operation
     operand operands[3];
 } operation;
 
+void print_operation(operation * op);
+
 #endif
