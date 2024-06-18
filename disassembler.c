@@ -197,8 +197,15 @@ void v_w_mod_rm(char* op_name, int v, int w, uint8_t mod, uint8_t rm, uint8_t* b
     }
 }
 
-void mod_reg_rm(char* op_name, uint8_t current, int d, int w)
+operation * mod_reg_rm(char* op_name, uint8_t current, int d, int w)
 {
+    operation * op = malloc(sizeof(operation));
+    op->name = op_name;
+    op->nb_operands = 2;
+    op->w = w;
+    int reg_idx = d == 1 ? 0 : 1;
+    int mem_idx = 1 - reg_idx;
+
     uint8_t bytes[4];
     bytes[0] = current;
     current = text[PC + 1];
@@ -212,6 +219,10 @@ void mod_reg_rm(char* op_name, uint8_t current, int d, int w)
     switch (mod)
     {
     case 0b00:
+        op->operands[reg_idx].type = OP_REG;
+        op->operands[reg_idx].value = reg;
+        op->operands[mem_idx].type = OP_MEM;
+
         if (rm == 0b110)
         {
             // we have to read the disp byte
@@ -224,6 +235,8 @@ void mod_reg_rm(char* op_name, uint8_t current, int d, int w)
             else
                 asprintf(&string, "%s [%04x], %s", op_name, disp, registers_name[w][reg]);
 
+            op->operands[mem_idx].value = disp;
+
             pretty_print(bytes, 4, string);
             PC+=3;
         }
@@ -233,6 +246,8 @@ void mod_reg_rm(char* op_name, uint8_t current, int d, int w)
                 asprintf(&string, "%s %s, %s", op_name, registers_name[w][reg], rm_string(rm, 0));
             else
                 asprintf(&string, "%s %s, %s", op_name, rm_string(rm, 0), registers_name[w][reg]);
+            
+            op->operands[mem_idx].value = compute_ea(rm, 0);
 
             pretty_print(bytes, 2, string);
             PC++;
@@ -250,6 +265,11 @@ void mod_reg_rm(char* op_name, uint8_t current, int d, int w)
             asprintf(&string, "%s %s, %s", op_name, registers_name[w][reg], rm_string(rm, signed_disp));
         else
             asprintf(&string, "%s %s, %s", op_name, rm_string(rm, signed_disp), registers_name[w][reg]);
+        
+        op->operands[reg_idx].type = OP_REG;
+        op->operands[reg_idx].value = reg;
+        op->operands[mem_idx].type = OP_MEM;
+        op->operands[mem_idx].value = compute_ea(rm, signed_disp);
 
         pretty_print(bytes, 4, string);
         PC+=3;
@@ -263,15 +283,27 @@ void mod_reg_rm(char* op_name, uint8_t current, int d, int w)
             asprintf(&string, "%s %s, %s", op_name, registers_name[w][reg], rm_string(rm, disp));
         else
             asprintf(&string, "%s %s, %s", op_name, rm_string(rm, disp), registers_name[w][reg]);
+        
+        op->operands[reg_idx].type = OP_REG;
+        op->operands[reg_idx].value = reg;
+        op->operands[mem_idx].type = OP_MEM;
+        op->operands[mem_idx].value = compute_ea(rm, disp);
 
         pretty_print(bytes, 3, string);
         PC+=2;
         break;
     case 0b11:
+
         if (d == 1)
             asprintf(&string, "%s %s, %s", op_name, registers_name[w][reg], registers_name[w][rm]);
         else
             asprintf(&string, "%s %s, %s", op_name, registers_name[w][rm], registers_name[w][reg]);
+        
+        op->operands[reg_idx].type = OP_REG;
+        op->operands[reg_idx].value = reg;
+        op->operands[mem_idx].type = OP_REG;
+        op->operands[mem_idx].value = rm;
+
         pretty_print(bytes, 2, string);
         PC++;
         break;
@@ -280,17 +312,17 @@ void mod_reg_rm(char* op_name, uint8_t current, int d, int w)
     }
 }
 
-void w_mod_reg_rm(char* op_name, uint8_t current)
+operation * w_mod_reg_rm(char* op_name, uint8_t current)
 {
     int w = LASTBIT1(current);
-    mod_reg_rm(op_name, current, 0, w);
+    return mod_reg_rm(op_name, current, 0, w);
 }
 
-void d_v_mod_reg_rm(char* op_name, uint8_t current)
+operation * d_v_mod_reg_rm(char* op_name, uint8_t current)
 {
     int d = LASTBIT2(current);
     int w = LASTBIT1(current);
-    mod_reg_rm(op_name, current, d, w);
+    return mod_reg_rm(op_name, current, d, w);
 }
 
 void w_reg_data(char * op_name, uint8_t current)
@@ -910,19 +942,19 @@ void disassembler(uint32_t text_length, uint32_t data_length)
         else if (BM6(current) == SPECIAL4)
             special4(current);
         else if (BM6(current) == MOV1)
-            d_v_mod_reg_rm("mov", current);
+            op = d_v_mod_reg_rm("mov", current);
         else if (BM4(current) == MOV3)
             w_reg_data("mov", current);
         else if (BM6(current) == XOR1)
-            d_v_mod_reg_rm("xor", current);
+            op = d_v_mod_reg_rm("xor", current);
         else if (BM6(current) == ADD1)
-            d_v_mod_reg_rm("add", current);
+            op = d_v_mod_reg_rm("add", current);
         else if (BM6(current) == CMP1)
-            d_v_mod_reg_rm("cmp", current);
+            op = d_v_mod_reg_rm("cmp", current);
         else if (BM6(current) == OR1)
-            d_v_mod_reg_rm("or", current);
+            op = d_v_mod_reg_rm("or", current);
         else if (current == LEA)
-            mod_reg_rm("lea", current, 1, 1);
+            op = mod_reg_rm("lea", current, 1, 1);
         else if (current == JE)
             jump_short("je", current);
         else if (current == JL)
@@ -970,7 +1002,7 @@ void disassembler(uint32_t text_length, uint32_t data_length)
         else if (BM5(current) == POP2)
             reg("pop", current);
         else if (BM6(current) == AND1)
-            d_v_mod_reg_rm("and", current);
+            op = d_v_mod_reg_rm("and", current);
         else if (BM7(current) == AND3)
             immediate_from_acc("and", current);
         else if (BM7(current) == IN1)
@@ -982,9 +1014,9 @@ void disassembler(uint32_t text_length, uint32_t data_length)
         else if (BM7(current) == OUT2)
             in_out("out", current, 0);
         else if (BM6(current) == SSB1)
-            d_v_mod_reg_rm("sbb", current);
+            op = d_v_mod_reg_rm("sbb", current);
         else if (BM6(current) == SUB1)
-            d_v_mod_reg_rm("sub", current);
+            op = d_v_mod_reg_rm("sub", current);
         else if (current == INT1)
             command_arg("int", current);
         else if (current == RET1 || current == RET3)
@@ -1022,13 +1054,13 @@ void disassembler(uint32_t text_length, uint32_t data_length)
         else if (current == STD)
             just_command("std", current);
         else if (BM6(current) == ADC1)
-            d_v_mod_reg_rm("adc", current);
+            op = d_v_mod_reg_rm("adc", current);
         else if (BM6(current) == ADC3)
             immediate_from_acc("adc", current);
         else if(BM7(current) == TEST1)
-            w_mod_reg_rm("test", current);
+            op = w_mod_reg_rm("test", current);
         else if(BM7(current) == XCHG1)
-            w_mod_reg_rm("xchg", current);
+            op = w_mod_reg_rm("xchg", current);
         else if(BM6(current) == XCHG2)
             reg("xchg", current);
         else if (current == RET2)
