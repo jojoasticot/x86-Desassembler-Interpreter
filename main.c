@@ -25,7 +25,6 @@ int main(int argc, char* argv[])
 
     char * filename = argv[1];
     FILE* file = fopen(filename, "r");
-    printf("File: %s\n", filename);
 
     uint32_t text_length;
     uint32_t data_length;

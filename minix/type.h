@@ -6,20 +6,20 @@
 #endif
 
 /* Type definitions. */
-typedef unsigned int vir_clicks; /* virtual  addresses and lengths in clicks */
-typedef unsigned long phys_bytes;/* physical addresses and lengths in bytes */
-typedef unsigned int phys_clicks;/* physical addresses and lengths in clicks */
+typedef uint16_t vir_clicks; /* virtual  addresses and lengths in clicks */
+typedef uint16_t phys_bytes;/* physical addresses and lengths in bytes */
+typedef uint16_t phys_clicks;/* physical addresses and lengths in clicks */
 
 #if (CHIP == INTEL)
-typedef unsigned int vir_bytes;	/* virtual addresses and lengths in bytes */
+typedef uint16_t vir_bytes;	/* virtual addresses and lengths in bytes */
 #endif
 
 #if (CHIP == M68000)
-typedef unsigned long vir_bytes;/* virtual addresses and lengths in bytes */
+typedef uint16_t vir_bytes;/* virtual addresses and lengths in bytes */
 #endif
 
 #if (CHIP == SPARC)
-typedef unsigned long vir_bytes;/* virtual addresses and lengths in bytes */
+typedef uint16_t vir_bytes;/* virtual addresses and lengths in bytes */
 #endif
 
 /* Types relating to messages. */
@@ -28,16 +28,16 @@ typedef unsigned long vir_bytes;/* virtual addresses and lengths in bytes */
 #define M4                 4
 #define M3_STRING         14
 
-typedef struct {int m1i1, m1i2, m1i3; char *m1p1, *m1p2, *m1p3;} mess_1;
-typedef struct {int m2i1, m2i2, m2i3; long m2l1, m2l2; char *m2p1;} mess_2;
-typedef struct {int m3i1, m3i2; char *m3p1; char m3ca1[M3_STRING];} mess_3;
-typedef struct {long m4l1, m4l2, m4l3, m4l4, m4l5;} mess_4;
-typedef struct {char m5c1, m5c2; int m5i1, m5i2; long m5l1, m5l2, m5l3;}mess_5;
-typedef struct {int m6i1, m6i2, m6i3; long m6l1; sighandler_t m6f1;} mess_6;
+typedef struct {int16_t m1i1, m1i2, m1i3; uint16_t m1p1, m1p2, m1p3;} mess_1;
+typedef struct {int16_t m2i1, m2i2, m2i3; int16_t m2l1, m2l2; uint16_t m2p1;} mess_2;
+typedef struct {int16_t m3i1, m3i2; uint16_t m3p1; char m3ca1[M3_STRING];} mess_3;
+typedef struct {int16_t m4l1, m4l2, m4l3, m4l4, m4l5;} mess_4;
+typedef struct {char m5c1, m5c2; int16_t m5i1, m5i2; int16_t m5l1, m5l2, m5l3;}mess_5;
+typedef struct {int16_t m6i1, m6i2, m6i3; int16_t m6l1; int16_t m6f1;} mess_6;
 
 typedef struct {
-  int m_source;			/* who sent the message */
-  int m_type;			/* what kind of message is it */
+  int16_t m_source;			/* who sent the message */
+  int16_t m_type;			/* what kind of message is it */
   union {
 	mess_1 m_m1;
 	mess_2 m_m2;
@@ -122,7 +122,7 @@ struct sigmsg {
 #define NIL_MESS ((message *) 0)
 
 struct psinfo {		/* information for the ps(1) program */
-  u16_t nr_tasks, nr_procs;	/* NR_TASKS and NR_PROCS constants. */
+  uint16_t nr_tasks, nr_procs;	/* NR_TASKS and NR_PROCS constants. */
   vir_bytes proc, mproc, fproc;	/* addresses of the main process tables. */
 };
 

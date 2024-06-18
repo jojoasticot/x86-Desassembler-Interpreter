@@ -5,6 +5,7 @@
 #include <string.h>
 #include "main.h"
 #include "operation.h"
+#include "interpreter.h"
 
 void pretty_print(uint8_t* bytes, int size, char* op)
 {
@@ -321,8 +322,12 @@ operation * d_v_mod_reg_rm(char* op_name, uint8_t current)
     return mod_reg_rm(op_name, current, d, w);
 }
 
-void w_reg_data(char * op_name, uint8_t current)
+operation * w_reg_data(char * op_name, uint8_t current)
 {
+    operation * op = malloc(sizeof(operation));
+    op->name = op_name;
+    op->nb_operands = 2;
+
     uint8_t bytes[4];
     bytes[0] = current;
     int w = (current & 0b00001000) >> 3;
@@ -332,16 +337,24 @@ void w_reg_data(char * op_name, uint8_t current)
     bytes[1] = current;
     data = bytes[1];
 
+    op->operands[0].type = OP_REG;
+    op->operands[0].value = reg;
+    op->operands[1].type = OP_IMM;
+    op->w = w;
+
     if (w)
     {
         bytes[2] = text[PC + 2];
         data = bytes[2] << 8 | bytes[1];
     }
 
+    op->operands[1].value = data;
+
     char* string;
     asprintf(&string, "%s %s, %04x", op_name, registers_name[w][reg], data);
     pretty_print(bytes, 2 + w, string);
     PC += 1 + w;
+    return op;
 }
 
 int read_data(uint16_t* p_data, uint8_t* bytes, int s, int w, int idx)
@@ -600,16 +613,23 @@ void just_command(char * op_name, uint8_t current)
     pretty_print(bytes, 1, string);
 }
 
-void command_arg(char * op_name, uint8_t current)
+operation * command_arg(char * op_name, uint8_t current)
 {
+    operation * op = malloc(sizeof(operation));
+    op->name = op_name;
+    op->nb_operands = 1;
+
     uint8_t bytes[2];
     bytes[0] = current;
     uint8_t arg = text[PC + 1];
     bytes[1] = arg;
+    op->operands[0].type = OP_IMM;
+    op->operands[0].value = arg;
     char* string;
     asprintf(&string, "%s %02x", op_name, arg);
     pretty_print(bytes, 2, string);
     PC++;
+    return op;
 }
 
 void immediate_from_acc(char * op_name, uint8_t current)
@@ -909,12 +929,14 @@ void read_file(FILE* file, uint32_t* text_length, uint32_t* data_length)
     for (uint32_t i = 0; i < *text_length; i++)
     {
         fread(&current, sizeof(current), 1, file);
+        // printf("i:%i, current:%02x (text)\n", i, current);
         text[i] = current;
     }
 
     for (uint32_t i = 0; i < *data_length; i++)
     {
         fread(&current, sizeof(current), 1, file);
+        // printf("i:%i, current:%02x (data)\n", i, current);
         data[i] = current;
     }
 }
@@ -929,6 +951,7 @@ void disassembler(uint32_t text_length, uint32_t data_length)
     {
         current = text[PC];
         op = NULL;
+
         printf("%04x, %02x ", PC, current);
         if (BM7(current) == SPECIAL1)
             op = special1(current);
@@ -941,7 +964,7 @@ void disassembler(uint32_t text_length, uint32_t data_length)
         else if (BM6(current) == MOV1)
             op = d_v_mod_reg_rm("mov", current);
         else if (BM4(current) == MOV3)
-            w_reg_data("mov", current);
+            op = w_reg_data("mov", current);
         else if (BM6(current) == XOR1)
             op = d_v_mod_reg_rm("xor", current);
         else if (BM6(current) == ADD1)
@@ -1015,7 +1038,7 @@ void disassembler(uint32_t text_length, uint32_t data_length)
         else if (BM6(current) == SUB1)
             op = d_v_mod_reg_rm("sub", current);
         else if (current == INT1)
-            command_arg("int", current);
+            op = command_arg("int", current);
         else if (current == RET1 || current == RET3)
             just_command("ret", current);
         else if (current == XLAT)
@@ -1082,7 +1105,8 @@ void disassembler(uint32_t text_length, uint32_t data_length)
 
         if (op != NULL)
         {
-            print_operation(op);
+            interpreter(op);
+            free(op);
         }
     }
 
