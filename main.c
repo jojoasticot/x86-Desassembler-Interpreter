@@ -7,6 +7,12 @@
 #include "operation.h"
 #include "disassembler.h"
 
+
+char* registers_name[2][8] = {
+    {"al", "cl", "dl", "bl", "ah", "ch", "dh", "bh"},
+    {"ax", "cx", "dx", "bx", "sp", "bp", "si", "di"},
+};
+
 uint16_t registers[8] = {0, 0, 0, 0, 0xffda, 0, 0, 0};
 uint8_t * text;
 uint8_t * data;

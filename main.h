@@ -3,6 +3,7 @@
 
 // Global variable
 
+extern char* registers_name[2][8];
 extern uint16_t registers[8];
 extern uint8_t * text;
 extern uint8_t * data;
