@@ -19,9 +19,12 @@ void pretty_print(uint8_t* bytes, int size, char* op)
         asprintf(&temp, "%02x", bytes[i]);
 
         strcat(concatenated, temp);
+
+        free(temp);
     }
 
     printf("%04x: %-14s%s\n", PC, concatenated, op);
+    free(op);
 }
 
 char* disp_string(int16_t disp)
@@ -952,7 +955,7 @@ void disassembler(uint32_t text_length, uint32_t data_length)
         current = text[PC];
         op = NULL;
 
-        printf("%04x, %02x ", PC, current);
+        // printf("%04x, %02x ", PC, current);
         if (BM7(current) == SPECIAL1)
             op = special1(current);
         else if (BM6(current) == SPECIAL2)

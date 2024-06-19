@@ -16,7 +16,7 @@
 #define MKNOD		  14 
 #define CHMOD		  15 
 #define CHOWN		  16 
-#define BRK		  17
+#define BRK	          17
 #define STAT		  18 
 #define LSEEK		  19
 #define GETPID		  20
@@ -36,7 +36,7 @@
 #define RENAME		  38
 #define MKDIR		  39
 #define RMDIR		  40
-#define DUP		  41 
+#define DUP		      41 
 #define PIPE		  42 
 #define TIMES		  43
 #define SETGID		  46

@@ -4,6 +4,7 @@
 #include "main.h"
 #include "operation.h"
 #include "minix/type.h"
+#include "interrupt.h"
 
 void update_reg(uint8_t reg, uint16_t value, int w)
 {
@@ -41,8 +42,6 @@ void interpreter(operation * op)
             printf("Error: mov operation not supported\n");
             exit(1);
         }
-        printf("BX = 0x%x\n", registers[BX]);
-        printf("Operation done successfully\n");
     }
     else if (strcmp(name, "int") == 0)
     {
@@ -50,6 +49,7 @@ void interpreter(operation * op)
         {
             uint16_t adress = registers[BX];
             message * msg = (message *) &data[adress];
+            interrupt(msg);
         }
     }
 }
