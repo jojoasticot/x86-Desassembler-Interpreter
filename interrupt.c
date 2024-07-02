@@ -7,6 +7,9 @@
 
 void interrupt(message * msg)
 {
+    // empty comment
+    printf("\n");
+
     switch (msg->m_type)
     {
         case EXIT:

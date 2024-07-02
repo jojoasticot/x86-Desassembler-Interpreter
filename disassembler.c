@@ -27,7 +27,7 @@ void pretty_print(uint8_t* bytes, int size, char* op)
         free(temp);
     }
 
-    printf("%04x: %-14s%s\n", PC, concatenated, op);
+    printf("%04x: %-14s%s", PC, concatenated, op);
     free(op);
 }
 
@@ -1000,7 +1000,7 @@ void disassembler(uint32_t text_length)
         else if (BM6(current) == SPECIAL4)
             special4(current);
         else if (BM6(current) == MOV1)
-            op = d_v_mod_reg_rm("mov", current);
+            op = d_v_mod_reg_rm("+mov", current);
         else if (BM4(current) == MOV3)
             op = w_reg_data("+mov", current);
         else if (BM6(current) == XOR1)

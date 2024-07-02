@@ -22,6 +22,9 @@ void move(operation * op)
         exit(1);
     }
 
+    // empty comment
+    printf("\n");
+
     operand op1 = op->operands[0];
     operand op2 = op->operands[1];
 
@@ -48,19 +51,19 @@ void sub(operation * op)
     {
         uint16_t adress = op->op0_value;
         uint16_t value = op->op1_value;
+
+        printf(" ;[%04x]%04x\n", adress, *(uint16_t *) &memory[adress]);
         if (op->w == 1)
             *(uint16_t *) &memory[adress] -= value;
         else
             *(uint8_t *) &memory[adress] -= value;
         
-        printf("%s [%04x], %i, new: %04x\n", op->name, adress, value, memory[adress]);
     }
 }
 
 void interpreter(operation * op)
 {
     char * name = op->name;
-    print_operation(op);
 
     if (strcmp(name, "+mov") == 0)
         move(op);
@@ -75,4 +78,6 @@ void interpreter(operation * op)
     }
     else if (strcmp(name, "+sub") == 0)
         sub(op);
+    else
+        printf(" | not done\n");
 }
