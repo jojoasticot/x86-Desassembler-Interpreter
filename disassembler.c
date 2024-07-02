@@ -9,6 +9,10 @@
 
 void pretty_print(uint8_t* bytes, int size, char* op)
 {
+    printf("%04x %04x %04x %04x %04x %04x %04x %04x ---- ", \
+    registers[AX], registers[BX], registers[CX], registers[DX], \
+    registers[SP], registers[BP], registers[SI], registers[DI]);
+
     char concatenated[2 * size + 1]; 
     concatenated[0] = '\0';
 
@@ -944,8 +948,9 @@ void read_file(FILE* file, uint32_t* text_length, uint32_t* data_length)
     }
 }
 
-void disassembler(uint32_t text_length, uint32_t data_length)
+void disassembler(uint32_t text_length)
 {
+    printf(" AX   BX   CX   DX   SP   BP   SI   DI  FLAGS IP\n");
 
     uint8_t current;
     operation * op;
