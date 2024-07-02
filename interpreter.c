@@ -1,6 +1,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <err.h>
 #include "main.h"
 #include "operation.h"
 #include "minix/type.h"
@@ -17,10 +18,7 @@ void update_reg(uint8_t reg, uint16_t value, int w)
 void move(operation * op)
 {
     if (op->nb_operands != 2)
-    {
-        printf("Error: mov operation must have 2 operands\n");
-        exit(1);
-    }
+        errx(1, "Error: mov operation must have 2 operands");
 
     // empty comment
     printf("\n");
@@ -33,19 +31,13 @@ void move(operation * op)
     else if (op1.type == OP_REG && op2.type == OP_REG)
         update_reg(op1.value, registers[op2.value], op->w);
     else
-    {
-        printf("Error: mov operation not supported\n");
-        exit(1);
-    }
+        errx(1, "Error: mov operation not supported");
 }
 
 void sub(operation * op)
 {
     if (op->nb_operands != 2)
-    {
-        printf("Error: sub operation must have 2 operands\n");
-        exit(1);
-    }
+        errx(1, "Error: sub operation must have 2 operands");
 
     if (op->op0_type == OP_MEM && op->op1_type == OP_IMM)
     {
@@ -57,8 +49,9 @@ void sub(operation * op)
             *(uint16_t *) &memory[adress] -= value;
         else
             *(uint8_t *) &memory[adress] -= value;
-        
     }
+    else
+        errx(1, "Error: sub operation not supported");
 }
 
 void interpreter(operation * op)
