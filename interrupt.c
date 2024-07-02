@@ -11,6 +11,7 @@ void interrupt(message * msg)
     {
         case EXIT:
             printf("<exit(%i)>\n", msg->m1_i1); // status of exit is stored in m1_i1
+            exit(msg->m1_i1);
             break;
         case WRITE:
         {
@@ -18,7 +19,7 @@ void interrupt(message * msg)
             char s [msg->m1_i2 + 1];
 
             for (int i = 0; i < msg->m1_i2; i++)
-                s[i] = data[msg_adress + i];
+                s[i] = memory[msg_adress + i];
             s[msg->m1_i2] = '\0';
 
             printf("<write(%i, 0x%04x, %i)%s => %i>\n", msg->m_source, msg_adress, msg->m1_i2, s, msg->m1_i2);

@@ -14,6 +14,7 @@ char* registers_name[2][8] = {
 };
 
 uint16_t registers[8] = {0, 0, 0, 0, 0xffda, 0, 0, 0};
+uint8_t memory[0xFFFF];
 uint8_t * text;
 uint8_t * data;
 uint32_t PC;

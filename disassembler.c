@@ -945,6 +945,7 @@ void read_file(FILE* file, uint32_t* text_length, uint32_t* data_length)
         fread(&current, sizeof(current), 1, file);
         // printf("i:%i, current:%02x (data)\n", i, current);
         data[i] = current;
+        memory[i] = current;
     }
 }
 
@@ -972,7 +973,7 @@ void disassembler(uint32_t text_length)
         else if (BM6(current) == MOV1)
             op = d_v_mod_reg_rm("mov", current);
         else if (BM4(current) == MOV3)
-            op = w_reg_data("mov", current);
+            op = w_reg_data("+mov", current);
         else if (BM6(current) == XOR1)
             op = d_v_mod_reg_rm("xor", current);
         else if (BM6(current) == ADD1)
@@ -1046,7 +1047,7 @@ void disassembler(uint32_t text_length)
         else if (BM6(current) == SUB1)
             op = d_v_mod_reg_rm("sub", current);
         else if (current == INT1)
-            op = command_arg("int", current);
+            op = command_arg("+int", current);
         else if (current == RET1 || current == RET3)
             just_command("ret", current);
         else if (current == XLAT)

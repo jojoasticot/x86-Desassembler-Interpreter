@@ -43,7 +43,7 @@ void interpreter(operation * op)
 
     if (strcmp(name, "+mov") == 0)
         move(op);
-    else if (strcmp(name, "int") == 0)
+    else if (strcmp(name, "+int") == 0)
     {
         if (op->operands[0].value == 0x20)
         {
