@@ -383,16 +383,24 @@ int read_data(uint16_t* p_data, uint8_t* bytes, int s, int w, int idx)
     return acc;
 }
 
-void s_w_data(char* op_name, uint8_t mod, uint8_t rm, int s, int w, uint8_t * bytes)
+operation * s_w_data(char* op_name, uint8_t mod, uint8_t rm, int s, int w, uint8_t * bytes)
 {
+    operation * op = malloc(sizeof(operation));
+    op->name = op_name;
+    op->nb_operands = 2;
+    op->w = w;
+
     uint16_t data;
     uint16_t disp;
     int acc;
     char* string;
+    op->op1_type = OP_IMM;
 
     switch (mod)
     {
     case 0b00:
+        op->op0_type = OP_MEM;
+
         if (rm == 0b110)
         {
             // we have to read the disp byte
@@ -406,6 +414,8 @@ void s_w_data(char* op_name, uint8_t mod, uint8_t rm, int s, int w, uint8_t * by
             else
                 asprintf(&string, "%s [%04x], %x", op_name, disp, data);
 
+            op->op0_value = disp;
+
             pretty_print(bytes, 5 + acc, string);
             PC += 4 + acc;
         }
@@ -418,12 +428,16 @@ void s_w_data(char* op_name, uint8_t mod, uint8_t rm, int s, int w, uint8_t * by
             else
                 asprintf(&string, "%s %s, %x", op_name, rm_string(rm, 0), data);
 
+            op->op0_value = compute_ea(rm, 0);
+
             pretty_print(bytes, 3 + acc, string);
             PC += 2 + acc;
         }
         
         break;
     case 0b10:
+        op->op0_type = OP_MEM;
+
         // we have to read the disp word
         bytes[2] = text[PC + 2];
         bytes[3] = text[PC + 3];
@@ -436,10 +450,14 @@ void s_w_data(char* op_name, uint8_t mod, uint8_t rm, int s, int w, uint8_t * by
         else
             asprintf(&string, "%s %s, %x", op_name, rm_string(rm, disp), data);
 
+        op->op0_value = compute_ea(rm, disp);
+
         pretty_print(bytes, 5 + acc, string);
         PC += 4 + acc;
         break;
     case 0b01:
+        op->op0_type = OP_MEM;
+
         // we have to read the disp byte
         bytes[2] = text[PC + 2];
         disp = (int8_t)bytes[2];
@@ -449,11 +467,15 @@ void s_w_data(char* op_name, uint8_t mod, uint8_t rm, int s, int w, uint8_t * by
             asprintf(&string, "%s %s, %04x", op_name, rm_string(rm, disp), data); 
         else
             asprintf(&string, "%s %s, %x", op_name, rm_string(rm, disp), data);
+        
+        op->op0_value = compute_ea(rm, disp);
 
         pretty_print(bytes, 4 + acc, string);
         PC += 3 + acc;
         break;
     case 0b11:
+        op->op0_type = OP_REG;
+
         acc = read_data(&data, bytes, s, w, 2);
 
         if (acc == 1)
@@ -464,12 +486,17 @@ void s_w_data(char* op_name, uint8_t mod, uint8_t rm, int s, int w, uint8_t * by
             asprintf(&string, "%s %s, %s%x", op_name, registers_name[w][rm], signed_data < 0 ? "-" : "", signed_data < 0 ? -signed_data : signed_data);
         }
 
+        op->op0_value = rm;
+
         pretty_print(bytes, 3 + acc, string);
         PC += 2 + acc;
         break;
     default:
         break;
     }
+
+    op->op1_value = data;
+    return op;
 }
 
 void reg(char* op_name, uint8_t current)
@@ -784,7 +811,7 @@ operation * special1(uint8_t current)
 
 // 0b100000 (add, addc, cmp, sub, ssb, or, xor, and)
 
-void special2(uint8_t current)
+operation * special2(uint8_t current)
 {
     uint8_t bytes[6];
     bytes[0] = current;
@@ -795,34 +822,36 @@ void special2(uint8_t current)
     uint16_t flag = FLAG(current);
     uint16_t mod = MOD(current);
     uint16_t rm = RM(current);
+    char * op_name = "";
 
     switch(flag)
     {
         case ADD2:
-            s_w_data("add", mod, rm, s, w, bytes);
+            op_name = "add";
             break;
         case SSB2:
-            s_w_data("sbb", mod, rm, s, w, bytes);
+            op_name = "ssb";
             break;
         case CMP2:
             if (w == 1)
-                s_w_data("cmp", mod, rm, s, w, bytes);
+                op_name = "cmp";
             else
-                s_w_data("cmp byte", mod, rm, s, w, bytes);
+                op_name = "cmp byte";
             break;
         case OR2:
-            s_w_data("or", mod, rm, s, w, bytes);
+            op_name = "or";
             break;
         case SUB2:
-            s_w_data("sub", mod, rm, s, w, bytes);
+            op_name = "+sub";
             break;
         case AND2:
-            s_w_data("and", mod, rm, s, w, bytes);
+            op_name = "and";
             break;
         default:
             printf("undefined\n");
             break;
     }
+    return s_w_data(op_name, mod, rm, s, w, bytes);
 }
 
 // 0b1111011 (neg, mul, imul, div, idiv, not, test)

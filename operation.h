@@ -44,4 +44,9 @@ typedef struct operation
 
 void print_operation(operation * op);
 
+#define op0_type operands[0].type
+#define op1_type operands[1].type
+#define op0_value operands[0].value
+#define op1_value operands[1].value
+
 #endif
