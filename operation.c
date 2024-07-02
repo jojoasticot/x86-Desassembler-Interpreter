@@ -9,15 +9,15 @@ void print_operation(operation * op)
     {
         if (op->operands[i].type == OP_REG)
         {
-            printf("%s", registers_name[op->w][op->operands[i].value]);
+            printf("reg: %s", registers_name[op->w][op->operands[i].value]);
         }
         else if (op->operands[i].type == OP_MEM)
         {
-            printf("0x%x", op->operands[i].value);
+            printf("mem: 0x%x", op->operands[i].value);
         }
         else if (op->operands[i].type == OP_IMM)
         {
-            printf("0x%x", op->operands[i].value);
+            printf("imm: 0x%x", op->operands[i].value);
         }
         if (i < op->nb_operands - 1)
             printf(", ");

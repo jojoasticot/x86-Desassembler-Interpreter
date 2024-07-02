@@ -390,7 +390,7 @@ operation * s_w_data(char* op_name, uint8_t mod, uint8_t rm, int s, int w, uint8
     op->nb_operands = 2;
     op->w = w;
 
-    uint16_t data;
+    uint16_t data = 0;
     uint16_t disp;
     int acc;
     char* string;
@@ -994,7 +994,7 @@ void disassembler(uint32_t text_length)
         if (BM7(current) == SPECIAL1)
             op = special1(current);
         else if (BM6(current) == SPECIAL2)
-            special2(current);
+            op = special2(current);
         else if (BM7(current) == SPECIAL3)
             special3(current);
         else if (BM6(current) == SPECIAL4)
