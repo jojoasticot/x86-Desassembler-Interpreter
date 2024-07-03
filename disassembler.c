@@ -7,11 +7,22 @@
 #include "operation.h"
 #include "interpreter.h"
 
+char * print_flags()
+{
+    char flags_str[5];
+    flags_str[0] = flags[0] ? 'O' : '-';
+    flags_str[1] = flags[1] ? 'S' : '-';
+    flags_str[2] = flags[2] ? 'Z' : '-';
+    flags_str[3] = flags[3] ? 'C' : '-';
+    flags_str[4] = '\0';
+    return flags_str;
+}
+
 void pretty_print(uint8_t* bytes, int size, char* op)
 {
-    printf("%04x %04x %04x %04x %04x %04x %04x %04x ---- ", \
+    printf("%04x %04x %04x %04x %04x %04x %04x %04x %s ", \
     registers[AX], registers[BX], registers[CX], registers[DX], \
-    registers[SP], registers[BP], registers[SI], registers[DI]);
+    registers[SP], registers[BP], registers[SI], registers[DI], print_flags());
 
     char concatenated[2 * size + 1]; 
     concatenated[0] = '\0';
