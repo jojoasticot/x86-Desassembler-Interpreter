@@ -11,6 +11,13 @@ extern uint8_t * text;
 extern uint8_t * data;
 extern uint32_t PC;
 
+// Flags names / indexes:
+
+#define OF 0
+#define SF 1
+#define ZF 2
+#define CF 3
+
 // Bit mask functions:
 
 #define BM4(x) (x & 0b11110000)

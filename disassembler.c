@@ -9,7 +9,7 @@
 
 char * print_flags()
 {
-    char flags_str[5];
+    static char flags_str[5];
     flags_str[0] = flags[0] ? 'O' : '-';
     flags_str[1] = flags[1] ? 'S' : '-';
     flags_str[2] = flags[2] ? 'Z' : '-';

@@ -61,6 +61,8 @@ void xor(operation * op)
 
     // empty comment
     printf("\n");
+    flags[OF] = 0;
+    flags[CF] = 0;
 
     if (op->op0_type == OP_REG && op->op1_type == OP_REG)
     {
@@ -71,6 +73,9 @@ void xor(operation * op)
             registers[reg1] ^= registers[reg2];
         else
             registers[reg1] = (registers[reg1] & 0xff00) | (registers[reg1] ^ registers[reg2]);
+
+        flags[SF] = (registers[reg1] & 0x8000) >> 15;
+        flags[ZF] = (registers[reg1] == 0);
     }
     else
         errx(1, "Error: xor operation not supported");
