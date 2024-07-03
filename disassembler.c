@@ -1004,7 +1004,7 @@ void disassembler(uint32_t text_length)
         else if (BM4(current) == MOV3)
             op = w_reg_data("+mov", current);
         else if (BM6(current) == XOR1)
-            op = d_v_mod_reg_rm("xor", current);
+            op = d_v_mod_reg_rm("+xor", current);
         else if (BM6(current) == ADD1)
             op = d_v_mod_reg_rm("add", current);
         else if (BM6(current) == CMP1)

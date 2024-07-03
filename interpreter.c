@@ -54,6 +54,28 @@ void sub(operation * op)
         errx(1, "Error: sub operation not supported");
 }
 
+void xor(operation * op)
+{
+    if (op->nb_operands != 2)
+        errx(1, "Error: xor operation must have 2 operands");
+
+    // empty comment
+    printf("\n");
+
+    if (op->op0_type == OP_REG && op->op1_type == OP_REG)
+    {
+        uint8_t reg1 = op->op0_value;
+        uint8_t reg2 = op->op1_value;
+
+        if (op->w == 1)
+            registers[reg1] ^= registers[reg2];
+        else
+            registers[reg1] = (registers[reg1] & 0xff00) | (registers[reg1] ^ registers[reg2]);
+    }
+    else
+        errx(1, "Error: xor operation not supported");
+}
+
 void interpreter(operation * op)
 {
     char * name = op->name;
@@ -71,6 +93,9 @@ void interpreter(operation * op)
     }
     else if (strcmp(name, "+sub") == 0)
         sub(op);
+    else if (strcmp(name, "+xor") == 0)
+        xor(op);
     else
         printf(" | not done\n");
+    print_operation(op);
 }
