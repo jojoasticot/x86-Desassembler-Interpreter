@@ -20,16 +20,23 @@ void move(operation * op)
     if (op->nb_operands != 2)
         errx(1, "Error: mov operation must have 2 operands");
 
-    // empty comment
-    printf("\n");
-
-    operand op1 = op->operands[0];
-    operand op2 = op->operands[1];
-
-    if (op1.type == OP_REG && op2.type == OP_IMM)
-        update_reg(op1.value, op2.value, op->w);
-    else if (op1.type == OP_REG && op2.type == OP_REG)
-        update_reg(op1.value, registers[op2.value], op->w);
+    if (op->op0_type == OP_REG && op->op1_type == OP_IMM)
+    {
+        update_reg(op->op0_value, op->op1_value, op->w);
+        // empty comment
+        printf("\n");
+    }
+    else if (op->op0_type == OP_REG && op->op1_type == OP_REG)
+    {
+        update_reg(op->op0_value, registers[op->op1_value], op->w);
+        // empty comment
+        printf("\n");
+    }
+    else if (op->op0_type == OP_REG && op->op1_type == OP_MEM)
+    {
+        update_reg(op->op0_value, *(uint16_t *) &memory[op->op1_value], op->w);
+        printf(" ;[%04x]%04x\n", op->op1_value, *(uint16_t *) &memory[op->op1_value]);
+    }
     else
         errx(1, "Error: mov operation not supported");
 }
@@ -74,8 +81,8 @@ void xor(operation * op)
         else
             registers[reg1] = (registers[reg1] & 0xff00) | (registers[reg1] ^ registers[reg2]);
 
-        flags[SF] = (registers[reg1] & 0x8000) >> 15;
-        flags[ZF] = (registers[reg1] == 0);
+        flags[SF] = registers[reg1] >> 15;
+        flags[ZF] = registers[reg1] == 0;
     }
     else
         errx(1, "Error: xor operation not supported");
@@ -89,12 +96,14 @@ void interpreter(operation * op)
         move(op);
     else if (strcmp(name, "+int") == 0)
     {
-        if (op->operands[0].value == 0x20)
+        if (op->op0_value == 0x20)
         {
             uint16_t adress = registers[BX];
-            message * msg = (message *) &data[adress];
+            message * msg = (message *) &memory[adress];
             interrupt(msg);
         }
+        else
+            errx(1, "Error: interrupt not supported");
     }
     else if (strcmp(name, "+sub") == 0)
         sub(op);
