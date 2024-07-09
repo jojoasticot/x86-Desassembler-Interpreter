@@ -134,7 +134,7 @@ uint16_t compute_ea(uint8_t rm, int16_t disp)
     return ea;
 }
 
-void v_w_mod_rm(char* op_name, int v, int w, uint8_t mod, uint8_t rm, uint8_t* bytes)
+void v_w_mod_rm(char* op_name, int v, int w, uint8_t mod, uint8_t rm, uint8_t* bytes) // TODO
 {
 
     uint16_t disp;
@@ -564,8 +564,9 @@ void jump_long(char* op_name, uint8_t current)
     PC += 2;
 }
 
-void call(char* op_name, int w, uint8_t mod, uint8_t rm, uint8_t * bytes, operation * op)
+operation * call(char* op_name, int w, uint8_t mod, uint8_t rm, uint8_t * bytes)
 {
+    operation * op = malloc(sizeof(operation));
     uint16_t disp;
     char* string;
     op->name = op_name;
@@ -638,6 +639,8 @@ void call(char* op_name, int w, uint8_t mod, uint8_t rm, uint8_t * bytes, operat
     default:
         break;
     }
+
+    return op;
 }
 
 void in_out(char* op_name, uint8_t current, int has_port)
@@ -789,7 +792,7 @@ void rep(uint8_t current)
 
 operation * special1(uint8_t current)
 {
-    operation * op = malloc(sizeof(operation));
+    operation * op = NULL;
     uint8_t bytes[6];
     bytes[0] = current;
     int w = LASTBIT1(current);
@@ -802,25 +805,25 @@ operation * special1(uint8_t current)
     switch(flag)
     {
         case PUSH1:
-            call("push", 1, mod, rm, bytes, op);
+            op = call("push", 1, mod, rm, bytes);
             break;
         case CALL2:
-            call("call", 1, mod, rm, bytes, op);
+            op = call("call", 1, mod, rm, bytes);
             break;
         case CALL4:
-            call("call", 1, mod, rm, bytes, op);
+            op = call("call", 1, mod, rm, bytes);
             break;
         case JMP3:
-            call("jmp", 1, mod, rm, bytes, op);
+            op = call("jmp", 1, mod, rm, bytes);
             break;
         case JMP5:
-            call("jmp", 1, mod, rm, bytes, op);
+            op = call("jmp", 1, mod, rm, bytes);
             break;
         case INC1:
-            call("inc", w, mod, rm, bytes, op);
+            op = call("inc", w, mod, rm, bytes);
             break;
         case DEC1:
-            call("dec", w, mod, rm, bytes, op);
+            op = call("dec", w, mod, rm, bytes);
             break;
         default:
             printf("undefined\n");
@@ -876,9 +879,9 @@ operation * special2(uint8_t current)
 
 // 0b1111011 (neg, mul, imul, div, idiv, not, test)
 
-void special3(uint8_t current)
+operation * special3(uint8_t current)
 {
-    operation * op = malloc(sizeof(operation));
+    operation * op = NULL;
     uint8_t bytes[6];
     bytes[0] = current;
     int w = LASTBIT1(current);
@@ -891,35 +894,37 @@ void special3(uint8_t current)
     switch(flag)
     {
         case NEG:
-            call("neg", w, mod, rm, bytes, op);
+            op = call("neg", w, mod, rm, bytes);
             break;
         case TEST2:
             if (w == 0 && mod == 0b01)
-                s_w_data("test byte", mod, rm, 0, w, bytes);
+                op = s_w_data("test byte", mod, rm, 0, w, bytes);
             else
-                s_w_data("test", mod, rm, 0, w, bytes);
+                op = s_w_data("+test", mod, rm, 0, w, bytes);
             break;
         case MUL:
-            call("mul", w, mod, rm, bytes, op);
+            op = call("mul", w, mod, rm, bytes);
             break;
         case IMUL:
-            call("imul", w, mod, rm, bytes, op);
+            op = call("imul", w, mod, rm, bytes);
             break;
         case DIV:
-            call("div", w, mod, rm, bytes, op);
+            op = call("div", w, mod, rm, bytes);
             break;
         case IDIV: 
-            call("idiv", w, mod, rm, bytes, op);
+            op = call("idiv", w, mod, rm, bytes);
             break;
         default:
             printf("undefined\n");
             break;
+
     }
+    return op;
 }
 
 // 0b110100 (shl, shr, sar, rol, ror, rcl, rcr)
 
-void special4(uint8_t current)
+void special4(uint8_t current) // TODO
 {
     uint8_t bytes[6];
     bytes[0] = current;
@@ -1016,7 +1021,7 @@ void disassembler(uint32_t text_length)
         else if (BM6(current) == SPECIAL2)
             op = special2(current);
         else if (BM7(current) == SPECIAL3)
-            special3(current);
+            op = special3(current);
         else if (BM6(current) == SPECIAL4)
             special4(current);
         else if (BM6(current) == MOV1)
