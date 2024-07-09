@@ -49,21 +49,53 @@ void move(operation * op)
 void sub(operation * op)
 {
     if (op->nb_operands != 2)
-        errx(1, "Error: sub operation must have 2 operands");
+        errx(1, "Error: cmp operation must have 2 operands");
 
-    if (op->op0_type == OP_MEM && op->op1_type == OP_IMM)
+    uint16_t result = 0;
+    uint16_t val1 = 0;
+    uint16_t val2 = 0;
+
+    if (op->op0_type == OP_REG && op->op1_type == OP_IMM)
     {
-        uint16_t adress = op->op0_value;
-        uint16_t value = op->op1_value;
-
-        printf(" ;[%04x]%04x\n", adress, *(uint16_t *) &memory[adress]);
-        if (op->w == 1)
-            *(uint16_t *) &memory[adress] -= value;
-        else
-            *(uint8_t *) &memory[adress] -= value;
+        printf("\n");
+        val1 = registers[op->op0_value];
+        val2 = op->op1_value;
+    }
+    else if (op->op0_type == OP_MEM && op->op1_type == OP_IMM)
+    {
+        printf(" ;[%04x]%04x\n", op->op0_value, *(uint16_t *) &memory[op->op0_value]);
+        val1 = *(uint16_t *) &memory[op->op0_value];
+        val2 = op->op1_value;
     }
     else
-        errx(1, "Error: sub operation not supported");
+    {
+        errx(1, "Error: cmp operation not supported");
+    }
+
+    if (op->w == 1)
+    {
+        result = val1 - val2;
+        flags[OF] = (val1 >> 15 != val2 >> 15) && (val2 >> 15 == result >> 15);
+        flags[CF] = val1 < val2;
+        flags[SF] = result >> 15;
+        flags[ZF] = result == 0;
+    }
+    else
+    {
+        result = (val1 & 0xff00) | ((val1 & 0xff) - (val2 & 0xff));
+        uint8_t sign1 = (val1 & 0x0080) >> 7;
+        uint8_t sign2 = (val2 & 0x0080) >> 7;
+        uint8_t signr = (result & 0x0080) >> 7;
+        flags[OF] = sign1 != sign2 && sign2 == signr; // sign1 == 1 && sign2 == 0 && signr == 0 || sign1 == 0 && sign2 == 1 && signr == 1
+        flags[CF] = (val1 & 0xff) < (val2 & 0xff);
+        flags[SF] = (result & 0x0080) == 0x0080;
+        flags[ZF] = (result & 0xff) == 0;
+    }
+
+    if (op->op0_type == OP_REG)
+        update_reg(op->op0_value, result, op->w);
+    else
+        *(uint16_t *) &memory[op->op0_value] = result;
 }
 
 void xor(operation * op)
@@ -324,8 +356,7 @@ void jmp(operation * op)
     }
     else
     {
-        printf("\n");
-        PC += 1 + op->w;
+        errx(1, "Error: jmp operation not supported");
     }
 
 }
