@@ -1017,13 +1017,13 @@ void disassembler(uint32_t text_length)
         else if (BM6(current) == XOR1)
             op = d_v_mod_reg_rm("+xor", current);
         else if (BM6(current) == ADD1)
-            op = d_v_mod_reg_rm("add", current);
+            op = d_v_mod_reg_rm("+add", current);
         else if (BM6(current) == CMP1)
             op = d_v_mod_reg_rm("cmp", current);
         else if (BM6(current) == OR1)
             op = d_v_mod_reg_rm("or", current);
         else if (current == LEA)
-            op = mod_reg_rm("lea", current, 1, 1);
+            op = mod_reg_rm("+lea", current, 1, 1);
         else if (current == JE)
             jump_short("je", current);
         else if (current == JL)

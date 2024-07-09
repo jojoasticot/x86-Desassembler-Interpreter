@@ -13,7 +13,7 @@ char* registers_name[2][8] = {
     {"ax", "cx", "dx", "bx", "sp", "bp", "si", "di"},
 };
 
-uint16_t registers[8] = {0, 0, 0, 0, 0xffda, 0, 0, 0};
+uint16_t registers[8] = {0, 0, 0, 0, 0xffd4, 0, 0, 0};
 uint8_t memory[0xFFFF];
 uint8_t flags[4] = {0, 0, 0, 0};
 uint8_t * text;
@@ -34,6 +34,8 @@ int main(int argc, char* argv[])
     read_file(file, &text_length, &data_length);
     printf("Text length: %d\n", text_length);
     printf("Data length: %d\n", data_length);
+    memory[0xffd4] = 1;
+    * (uint16_t*) &memory [0xffd6] = 0xffde;
 
     disassembler(text_length, data_length);
 

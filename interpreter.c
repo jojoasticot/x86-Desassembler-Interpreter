@@ -88,6 +88,17 @@ void xor(operation * op)
         errx(1, "Error: xor operation not supported");
 }
 
+void lea(operation * op)
+{
+    if (op->nb_operands != 2)
+        errx(1, "Error: lea operation must have 2 operands");
+    if (op->op0_type != OP_REG || op->op1_type != OP_MEM)
+        errx(1, "Error: lea operation not supported");
+    
+    update_reg(op->op0_value, op->op1_value, op->w);
+    printf(" ;[%4x]%x\n", op->op1_value, *(uint16_t *) &memory[op->op1_value]);
+}
+
 void interpreter(operation * op)
 {
     char * name = op->name;
@@ -109,7 +120,10 @@ void interpreter(operation * op)
         sub(op);
     else if (strcmp(name, "+xor") == 0)
         xor(op);
+    else if (strcmp(name, "+lea") == 0)
+        lea(op);
+    else if (strcomp(name, "+add") == 0)
+        add(op);
     else
         printf(" | not done\n");
-    print_operation(op);
 }
