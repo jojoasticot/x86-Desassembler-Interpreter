@@ -552,13 +552,17 @@ operation * jump_short(char* op_name, uint8_t current)
     char* string;
     asprintf(&string, "%s %04x", op_name, addr);
     pretty_print(bytes, 2, string);
-    PC++;
 
     return op;
 }
 
-void jump_long(char* op_name, uint8_t current)
+operation * jump_long(char* op_name, uint8_t current)
 {
+    operation * op = malloc(sizeof(operation));
+    op->name = op_name;
+    op->nb_operands = 1;
+    op->w = 1;
+
     uint8_t bytes[4];
     bytes[0] = current;
     uint16_t disp;
@@ -566,12 +570,16 @@ void jump_long(char* op_name, uint8_t current)
     bytes[2] = text[PC + 2];
     disp = bytes[2] << 8 | bytes[1];
     int16_t signed_disp = (int16_t)disp;
-
     uint16_t addr = PC + signed_disp + 3;
+
+    op->op0_type = OP_IMM;
+    op->op0_value = addr;
+
     char* string;
     asprintf(&string, "%s %04x", op_name, addr);
     pretty_print(bytes, 3, string);
-    PC += 2;
+    
+    return op;
 }
 
 operation * call(char* op_name, int w, uint8_t mod, uint8_t rm, uint8_t * bytes)
@@ -1077,15 +1085,15 @@ void disassembler(uint32_t text_length)
         else if (current == JNO)
             op = jump_short("jno", current);
         else if (current == JNS)
-            jump_long("jns", current);
+            op = jump_long("jns", current);
         else if (BM5(current) == PUSH2)
             op = reg("+push", current);
         else if (current == CALL1)
-            jump_long("call", current);
+            op = jump_long("+call", current);
         else if (current == JMP1)
-            jump_long("jmp", current);
+            op = jump_long("jmp", current);
         else if (current == JMP2)
-            jump_short("jmp short", current);
+            op = jump_short("jmp short", current);
         else if (BM5(current) == DEC2)
             op = reg("dec", current);
         else if (BM5(current) == INC2)

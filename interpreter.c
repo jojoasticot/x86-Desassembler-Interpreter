@@ -218,11 +218,14 @@ void jnb(operation * op)
 
     if (flags[CF] == 0)
     {
-        PC = op->op0_value;
+        PC = op->op0_value - 1; // PC will be incremented at the end of the loop
         printf(" ;%04x\n", PC);
     }
     else
+    {
         printf("\n");
+        PC++;
+    }
 }
 
 void jne(operation * op)
@@ -232,11 +235,14 @@ void jne(operation * op)
 
     if (flags[ZF] == 0)
     {
-        PC = op->op0_value;
+        PC = op->op0_value - 1; // PC will be incremented at the end of the loop
         printf(" ;%04x\n", PC);
     }
     else
+    {
         printf("\n");
+        PC++;
+    }
 }
 
 void test(operation * op) 
@@ -287,6 +293,25 @@ void push(operation * op)
         errx(1, "Error: push operation not supported");
 }
 
+void _call(operation * op)
+{
+    if (op->nb_operands != 1)
+        errx(1, "Error: call operation must have 1 operand");
+
+    if (op->op0_type == OP_IMM)
+    {
+        printf("\n");
+        registers[SP] -= 2;
+        *(uint16_t *) &memory[registers[SP]] = PC;
+        PC = op->op0_value - 1; // PC will be incremented at the end of the loop
+    }
+    else
+    {
+        printf("\n");
+        PC += 2;
+    }
+}
+
 void interpreter(operation * op)
 {
     char * name = op->name;
@@ -322,6 +347,8 @@ void interpreter(operation * op)
         test(op);
     else if (strcmp(name, "+push") == 0)
         push(op);
+    else if (strcmp(name, "+call") == 0)
+        _call(op);
     else
         printf(" | not done\n");
 }
