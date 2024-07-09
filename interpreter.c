@@ -34,13 +34,13 @@ void move(operation * op)
     }
     else if (op->op0_type == OP_REG && op->op1_type == OP_MEM)
     {
-        update_reg(op->op0_value, *(uint16_t *) &memory[op->op1_value], op->w);
         printf(" ;[%04x]%04x\n", op->op1_value, *(uint16_t *) &memory[op->op1_value]);
+        update_reg(op->op0_value, *(uint16_t *) &memory[op->op1_value], op->w);
     }
     else if (op->op0_type == OP_MEM && op->op1_type == OP_REG)
     {
-        *(uint16_t *) &memory[op->op0_value] = registers[op->op1_value];
         printf(" ;[%04x]%04x\n", op->op0_value, *(uint16_t *) &memory[op->op0_value]);
+        *(uint16_t *) &memory[op->op0_value] = registers[op->op1_value];
     }
     else
         errx(1, "Error: mov operation not supported");
@@ -169,17 +169,25 @@ void cmp(operation * op)
     if (op->nb_operands != 2)
         errx(1, "Error: cmp operation must have 2 operands");
 
-    // empty comment
-    printf("\n");
-
     uint16_t temp = 0;
     uint16_t val1 = 0;
     uint16_t val2 = 0;
 
     if (op->op0_type == OP_REG && op->op1_type == OP_IMM)
     {
+        printf("\n");
         val1 = registers[op->op0_value];
         val2 = op->op1_value;
+    }
+    else if (op->op0_type == OP_MEM && op->op1_type == OP_IMM)
+    {
+        printf(" ;[%04x]%04x\n", op->op0_value, *(uint16_t *) &memory[op->op0_value]);
+        val1 = *(uint16_t *) &memory[op->op0_value];
+        val2 = op->op1_value;
+    }
+    else
+    {
+        errx(1, "Error: cmp operation not supported");
     }
 
     if (op->w == 1)
@@ -209,6 +217,20 @@ void jnb(operation * op)
         errx(1, "Error: jnb operation must have 1 operand");
 
     if (flags[CF] == 0)
+    {
+        PC = op->op0_value;
+        printf(" ;%04x\n", PC);
+    }
+    else
+        printf("\n");
+}
+
+void jne(operation * op)
+{
+    if (op->nb_operands != 1)
+        errx(1, "Error: jne operation must have 1 operand");
+
+    if (flags[ZF] == 0)
     {
         PC = op->op0_value;
         printf(" ;%04x\n", PC);
@@ -278,6 +300,8 @@ void interpreter(operation * op)
         cmp(op);
     else if (strcmp(name, "+jnb") == 0)
         jnb(op);
+    else if (strcmp(name, "+jne") == 0)
+        jne(op);
     else if (strcmp(name, "+test") == 0)
         test(op);
     else

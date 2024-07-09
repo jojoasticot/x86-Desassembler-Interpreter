@@ -1055,7 +1055,7 @@ void disassembler(uint32_t text_length)
         else if (current == JS)
             op = jump_short("js", current);
         else if (current == JNE)
-            op = jump_short("jne", current);
+            op = jump_short("+jne", current);
         else if (current == JNL)
             op = jump_short("jnl", current);
         else if (current == JNLE)
