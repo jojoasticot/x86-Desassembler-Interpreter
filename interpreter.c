@@ -107,8 +107,8 @@ void add(operation * op)
     // empty comment
     printf("\n");
     uint16_t result = 0;
-    uint8_t val1 = 0;
-    uint8_t val2 = 0;
+    uint16_t val1 = 0;
+    uint16_t val2 = 0;
 
     if (op->op0_type == OP_REG && op->op1_type == OP_REG)
     {
