@@ -37,6 +37,11 @@ void move(operation * op)
         update_reg(op->op0_value, *(uint16_t *) &memory[op->op1_value], op->w);
         printf(" ;[%04x]%04x\n", op->op1_value, *(uint16_t *) &memory[op->op1_value]);
     }
+    else if (op->op0_type == OP_MEM && op->op1_type == OP_REG)
+    {
+        *(uint16_t *) &memory[op->op0_value] = registers[op->op1_value];
+        printf(" ;[%04x]%04x\n", op->op0_value, *(uint16_t *) &memory[op->op0_value]);
+    }
     else
         errx(1, "Error: mov operation not supported");
 }
@@ -210,7 +215,38 @@ void jnb(operation * op)
     }
     else
         printf("\n");
+}
 
+void test(operation * op) // TODO
+{
+    if (op->nb_operands != 2)
+        errx(1, "Error: test operation must have 2 operands");
+
+    flags[OF] = 0;
+    flags[CF] = 0;
+
+    //empty comment
+    printf("\n");
+
+    if (op->op0_type == OP_REG && op->op1_type == OP_IMM)
+    {
+        uint16_t reg = registers[op->op0_value];
+        uint16_t imm = op->op1_value;
+        uint16_t result = reg & imm;
+
+        if (op->w == 1)
+        {
+            flags[SF] = result >> 15;
+            flags[ZF] = result == 0;
+        }
+        else
+        {
+            flags[SF] = (result & 0x0080) == 0x0080;
+            flags[ZF] = (result & 0xff) == 0;
+        }
+    }
+    else
+        errx(1, "Error: test operation not supported");
 }
 
 void interpreter(operation * op)
@@ -242,6 +278,8 @@ void interpreter(operation * op)
         cmp(op);
     else if (strcmp(name, "+jnb") == 0)
         jnb(op);
+    else if (strcmp(name, "+test") == 0)
+        test(op);
     else
         printf(" | not done\n");
 }

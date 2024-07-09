@@ -1171,6 +1171,8 @@ void disassembler(uint32_t text_length)
             interpreter(op);
             free(op);
         }
+        else
+            printf("\n");
     }
 
     if (PC == text_length - 1)
