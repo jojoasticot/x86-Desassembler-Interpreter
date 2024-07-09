@@ -239,7 +239,7 @@ void jne(operation * op)
         printf("\n");
 }
 
-void test(operation * op) // TODO
+void test(operation * op) 
 {
     if (op->nb_operands != 2)
         errx(1, "Error: test operation must have 2 operands");
@@ -269,6 +269,22 @@ void test(operation * op) // TODO
     }
     else
         errx(1, "Error: test operation not supported");
+}
+
+void push(operation * op)
+{
+    if (op->nb_operands != 1)
+        errx(1, "Error: push operation must have 1 operand");
+
+    if (op->op0_type == OP_REG)
+    {
+        printf("\n");
+        uint16_t reg = registers[op->op0_value];
+        registers[SP] -= 2;
+        *(uint16_t *) &memory[registers[SP]] = reg;
+    }
+    else
+        errx(1, "Error: push operation not supported");
 }
 
 void interpreter(operation * op)
@@ -304,6 +320,8 @@ void interpreter(operation * op)
         jne(op);
     else if (strcmp(name, "+test") == 0)
         test(op);
+    else if (strcmp(name, "+push") == 0)
+        push(op);
     else
         printf(" | not done\n");
 }

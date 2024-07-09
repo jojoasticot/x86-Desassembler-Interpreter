@@ -510,17 +510,27 @@ operation * s_w_data(char* op_name, uint8_t mod, uint8_t rm, int s, int w, uint8
     return op;
 }
 
-void reg(char* op_name, uint8_t current)
+operation * reg(char* op_name, uint8_t current)
 {
+    operation * op = malloc(sizeof(operation));
+    op->name = op_name;
+    op->nb_operands = 1;
+    op->w = 1;
+
     uint8_t bytes[2];
     bytes[0] = current;
     uint8_t reg = current & 0b00000111;
+    op->op0_type = OP_REG;
+    op->op0_value = reg;
+
     char* string;
     if (strcmp(op_name, "xchg") == 0)
         asprintf(&string, "%s %s, ax", op_name, registers_name[1][reg]);
     else
         asprintf(&string, "%s %s", op_name, registers_name[1][reg]);
     pretty_print(bytes, 1, string);
+
+    return op;
 }
 
 operation * jump_short(char* op_name, uint8_t current)
@@ -1069,7 +1079,7 @@ void disassembler(uint32_t text_length)
         else if (current == JNS)
             jump_long("jns", current);
         else if (BM5(current) == PUSH2)
-            reg("push", current);
+            op = reg("+push", current);
         else if (current == CALL1)
             jump_long("call", current);
         else if (current == JMP1)
@@ -1077,13 +1087,13 @@ void disassembler(uint32_t text_length)
         else if (current == JMP2)
             jump_short("jmp short", current);
         else if (BM5(current) == DEC2)
-            reg("dec", current);
+            op = reg("dec", current);
         else if (BM5(current) == INC2)
-            reg("inc", current);
+            op = reg("inc", current);
         else if (current == HLT)
             just_command("hlt", current);
         else if (BM5(current) == POP2)
-            reg("pop", current);
+            op = reg("pop", current);
         else if (BM6(current) == AND1)
             op = d_v_mod_reg_rm("and", current);
         else if (BM7(current) == AND3)
@@ -1145,7 +1155,7 @@ void disassembler(uint32_t text_length)
         else if(BM7(current) == XCHG1)
             op = w_mod_reg_rm("xchg", current);
         else if(BM6(current) == XCHG2)
-            reg("xchg", current);
+            op = reg("xchg", current);
         else if (current == RET2)
         {
             uint8_t bytes[3];
