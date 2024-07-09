@@ -198,6 +198,21 @@ void cmp(operation * op)
     }
 }
 
+void jnb(operation * op)
+{
+    if (op->nb_operands != 1)
+        errx(1, "Error: jnb operation must have 1 operand");
+
+    if (flags[CF] == 0)
+    {
+        PC = op->op0_value;
+        printf(" ;%04x\n", PC);
+    }
+    else
+        printf("\n");
+
+}
+
 void interpreter(operation * op)
 {
     char * name = op->name;
@@ -225,6 +240,8 @@ void interpreter(operation * op)
         add(op);
     else if (strcmp(name, "+cmp") == 0)
         cmp(op);
+    else if (strcmp(name, "+jnb") == 0)
+        jnb(op);
     else
         printf(" | not done\n");
 }

@@ -523,19 +523,28 @@ void reg(char* op_name, uint8_t current)
     pretty_print(bytes, 1, string);
 }
 
-void jump_short(char* op_name, uint8_t current)
+operation * jump_short(char* op_name, uint8_t current)
 {
+    operation * op = malloc(sizeof(operation));
+    op->name = op_name;
+    op->nb_operands = 1;
+    op->w = 0;
+
     uint8_t bytes[4];
     bytes[0] = current;
     current = text[PC + 1];
     bytes[1] = current;
     int8_t signed_disp = (int8_t)bytes[1];
-
     uint16_t addr = PC + signed_disp + 2;
+    op->op0_type = OP_IMM;
+    op->op0_value = addr;
+
     char* string;
     asprintf(&string, "%s %04x", op_name, addr);
     pretty_print(bytes, 2, string);
     PC++;
+
+    return op;
 }
 
 void jump_long(char* op_name, uint8_t current)
@@ -1025,33 +1034,33 @@ void disassembler(uint32_t text_length)
         else if (current == LEA)
             op = mod_reg_rm("+lea", current, 1, 1);
         else if (current == JE)
-            jump_short("je", current);
+            op = jump_short("je", current);
         else if (current == JL)
-            jump_short("jl", current);
+            op = jump_short("jl", current);
         else if (current == JLE)
-            jump_short("jle", current);
+            op = jump_short("jle", current);
         else if (current == JB)
-            jump_short("jb", current);
+            op = jump_short("jb", current);
         else if (current == JBE)
-            jump_short("jbe", current);
+            op = jump_short("jbe", current);
         else if (current == JP)
-            jump_short("jp", current);
+            op = jump_short("jp", current);
         else if (current == JO)
-            jump_short("jo", current);
+            op = jump_short("jo", current);
         else if (current == JS)
-            jump_short("js", current);
+            op = jump_short("js", current);
         else if (current == JNE)
-            jump_short("jne", current);
+            op = jump_short("jne", current);
         else if (current == JNL)
-            jump_short("jnl", current);
+            op = jump_short("jnl", current);
         else if (current == JNLE)
-            jump_short("jnle", current);
+            op = jump_short("jnle", current);
         else if (current == JNB)
-            jump_short("jnb", current);
+            op = jump_short("+jnb", current);
         else if (current == JNBE)
-            jump_short("jnbe", current);
+            op = jump_short("jnbe", current);
         else if (current == JNO)
-            jump_short("jno", current);
+            op = jump_short("jno", current);
         else if (current == JNS)
             jump_long("jns", current);
         else if (BM5(current) == PUSH2)
