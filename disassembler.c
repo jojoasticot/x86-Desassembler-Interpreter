@@ -845,7 +845,7 @@ operation * special2(uint8_t current)
             break;
         case CMP2:
             if (w == 1)
-                op_name = "cmp";
+                op_name = "+cmp";
             else
                 op_name = "cmp byte";
             break;

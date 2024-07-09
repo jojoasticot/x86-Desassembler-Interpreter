@@ -138,6 +138,8 @@ void add(operation * op)
         result = val1 + val2;
         flags[OF] = (result >> 15 != val1 >> 15) && (val2 >> 15 == val1 >> 15);
         flags[CF] = result < val1;
+        flags[SF] = result >> 15;
+        flags[ZF] = result == 0;
     }
     else
     {
@@ -147,10 +149,9 @@ void add(operation * op)
         uint8_t signr = (result & 0x0080) >> 7;
         flags[OF] = (signr != sign1) && (sign1 == sign2);
         flags[CF] = result < (val1 & 0xff);
+        flags[SF] = (result & 0x0080) == 0x0080;
+        flags[ZF] = (result & 0xff) == 0;
     }
-
-    flags[SF] = result >> 15;
-    flags[ZF] = result == 0;
 
     if (op->op0_type == OP_REG)
         registers[op->op0_value] = result;
@@ -160,7 +161,41 @@ void add(operation * op)
 
 void cmp(operation * op)
 {
+    if (op->nb_operands != 2)
+        errx(1, "Error: cmp operation must have 2 operands");
 
+    // empty comment
+    printf("\n");
+
+    uint16_t temp = 0;
+    uint16_t val1 = 0;
+    uint16_t val2 = 0;
+
+    if (op->op0_type == OP_REG && op->op1_type == OP_IMM)
+    {
+        val1 = registers[op->op0_value];
+        val2 = op->op1_value;
+    }
+
+    if (op->w == 1)
+    {
+        temp = val1 - val2;
+        flags[OF] = (val1 >> 15 != val2 >> 15) && (val2 >> 15 == temp >> 15);
+        flags[CF] = val1 < val2;
+        flags[SF] = temp >> 15;
+        flags[ZF] = temp == 0;
+    }
+    else
+    {
+        temp = (val1 & 0xff00) | ((val1 & 0xff) - (val2 & 0xff));
+        uint8_t sign1 = (val1 & 0x0080) >> 7;
+        uint8_t sign2 = (val2 & 0x0080) >> 7;
+        uint8_t signr = (temp & 0x0080) >> 7;
+        flags[OF] = sign1 != sign2 && sign2 == signr; // sign1 == 1 && sign2 == 0 && signr == 0 || sign1 == 0 && sign2 == 1 && signr == 1
+        flags[CF] = (val1 & 0xff) < (val2 & 0xff);
+        flags[SF] = (temp & 0x0080) == 0x0080;
+        flags[ZF] = (temp & 0xff) == 0;
+    }
 }
 
 void interpreter(operation * op)
