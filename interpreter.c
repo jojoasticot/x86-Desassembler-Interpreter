@@ -106,35 +106,61 @@ void add(operation * op)
     
     // empty comment
     printf("\n");
+    uint16_t result = 0;
+    uint8_t val1 = 0;
+    uint8_t val2 = 0;
 
     if (op->op0_type == OP_REG && op->op1_type == OP_REG)
     {
-        uint8_t reg1 = op->op0_value;
-        uint8_t reg2 = op->op1_value;
-        uint16_t result;
-
-        if (op->w == 1)
-        {
-            result = registers[reg1] + registers[reg2];
-            flags[OF] = (result >> 15 != registers[reg1] >> 15) && (registers[reg2] >> 15 == registers[reg1] >> 15);
-            flags[CF] = result < registers[reg1];
-        }
-        else
-        {
-            result = (registers[reg1] & 0xff00) | (registers[reg1] + registers[reg2]);
-            uint8_t sign1 = (registers[reg1] & 0x0080) >> 7;
-            uint8_t sign2 = (registers[reg2] & 0x0080) >> 7;
-            uint8_t signr = (result & 0x0080) >> 7;
-            flags[OF] = (signr != sign1) && (sign1 == sign2);
-            flags[CF] = result < (registers[reg1] & 0xff);
-        }
-        registers[reg1] = result;
-
-        flags[SF] = result >> 15;
-        flags[ZF] = result == 0;
+        val1 = registers[op->op0_value];
+        val2 = registers[op->op1_value];
+    }
+    else if (op->op0_type == OP_REG && op->op1_type == OP_IMM)
+    {
+        val1 = registers[op->op0_value];
+        val2 = op->op1_value;
+    }
+    else if (op->op0_type == OP_MEM && op->op1_type == OP_REG)
+    {
+        val1 = *(uint16_t *) &memory[op->op0_value];
+        val2 = registers[op->op1_value];
+    }
+    else if (op->op0_type == OP_MEM && op->op1_type == OP_IMM)
+    {
+        val1 = *(uint16_t *) &memory[op->op0_value];
+        val2 = op->op1_value;
     }
     else
         errx(1, "Error: add operation not supported");
+    
+    if (op->w == 1)
+    {
+        result = val1 + val2;
+        flags[OF] = (result >> 15 != val1 >> 15) && (val2 >> 15 == val1 >> 15);
+        flags[CF] = result < val1;
+    }
+    else
+    {
+        result = (val1 & 0xff00) | (val1 + val2);
+        uint8_t sign1 = (val1 & 0x0080) >> 7;
+        uint8_t sign2 = (val2 & 0x0080) >> 7;
+        uint8_t signr = (result & 0x0080) >> 7;
+        flags[OF] = (signr != sign1) && (sign1 == sign2);
+        flags[CF] = result < (val1 & 0xff);
+    }
+
+    flags[SF] = result >> 15;
+    flags[ZF] = result == 0;
+
+    if (op->op0_type == OP_REG)
+        registers[op->op0_value] = result;
+    else
+        *(uint16_t *) &memory[op->op0_value] = result;
+}
+
+void cmp(operation * op)
+{
+
 }
 
 void interpreter(operation * op)
@@ -162,6 +188,8 @@ void interpreter(operation * op)
         lea(op);
     else if (strcmp(name, "+add") == 0)
         add(op);
+    else if (strcmp(name, "+cmp") == 0)
+        cmp(op);
     else
         printf(" | not done\n");
 }
