@@ -1091,7 +1091,7 @@ void disassembler(uint32_t text_length)
         else if (current == CALL1)
             op = jump_long("+call", current);
         else if (current == JMP1)
-            op = jump_long("jmp", current);
+            op = jump_long("+jmp", current);
         else if (current == JMP2)
             op = jump_short("jmp short", current);
         else if (BM5(current) == DEC2)

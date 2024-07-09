@@ -312,6 +312,24 @@ void _call(operation * op)
     }
 }
 
+void jmp(operation * op)
+{
+    if (op->nb_operands != 1)
+        errx(1, "Error: jmp operation must have 1 operand");
+
+    if (op->op0_type == OP_IMM)
+    {
+        printf("\n");
+        PC = op->op0_value - 1; // PC will be incremented at the end of the loop
+    }
+    else
+    {
+        printf("\n");
+        PC += 1 + op->w;
+    }
+
+}
+
 void interpreter(operation * op)
 {
     char * name = op->name;
@@ -349,6 +367,8 @@ void interpreter(operation * op)
         push(op);
     else if (strcmp(name, "+call") == 0)
         _call(op);
+    else if (strcmp(name, "+jmp") == 0)
+        jmp(op);
     else
         printf(" | not done\n");
 }
