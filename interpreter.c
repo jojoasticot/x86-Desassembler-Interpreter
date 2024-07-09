@@ -99,6 +99,44 @@ void lea(operation * op)
     printf(" ;[%4x]%x\n", op->op1_value, *(uint16_t *) &memory[op->op1_value]);
 }
 
+void add(operation * op)
+{
+    if (op->nb_operands != 2)
+        errx(1, "Error: add operation must have 2 operands");
+    
+    // empty comment
+    printf("\n");
+
+    if (op->op0_type == OP_REG && op->op1_type == OP_REG)
+    {
+        uint8_t reg1 = op->op0_value;
+        uint8_t reg2 = op->op1_value;
+        uint16_t result;
+
+        if (op->w == 1)
+        {
+            result = registers[reg1] + registers[reg2];
+            flags[OF] = (result >> 15 != registers[reg1] >> 15) && (registers[reg2] >> 15 == registers[reg1] >> 15);
+            flags[CF] = result < registers[reg1];
+        }
+        else
+        {
+            result = (registers[reg1] & 0xff00) | (registers[reg1] + registers[reg2]);
+            uint8_t sign1 = (registers[reg1] & 0x0080) >> 7;
+            uint8_t sign2 = (registers[reg2] & 0x0080) >> 7;
+            uint8_t signr = (result & 0x0080) >> 7;
+            flags[OF] = (signr != sign1) && (sign1 == sign2);
+            flags[CF] = result < (registers[reg1] & 0xff);
+        }
+        registers[reg1] = result;
+
+        flags[SF] = result >> 15;
+        flags[ZF] = result == 0;
+    }
+    else
+        errx(1, "Error: add operation not supported");
+}
+
 void interpreter(operation * op)
 {
     char * name = op->name;
@@ -122,7 +160,7 @@ void interpreter(operation * op)
         xor(op);
     else if (strcmp(name, "+lea") == 0)
         lea(op);
-    else if (strcomp(name, "+add") == 0)
+    else if (strcmp(name, "+add") == 0)
         add(op);
     else
         printf(" | not done\n");

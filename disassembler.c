@@ -1019,7 +1019,7 @@ void disassembler(uint32_t text_length)
         else if (BM6(current) == ADD1)
             op = d_v_mod_reg_rm("+add", current);
         else if (BM6(current) == CMP1)
-            op = d_v_mod_reg_rm("cmp", current);
+            op = d_v_mod_reg_rm("+cmp", current);
         else if (BM6(current) == OR1)
             op = d_v_mod_reg_rm("or", current);
         else if (current == LEA)
