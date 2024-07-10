@@ -6,6 +6,7 @@
 #include "operation.h"
 #include "minix/type.h"
 #include "interrupt.h"
+#include "interpreter.h"
 
 int call_size = 0;
 
@@ -479,13 +480,51 @@ void je(operation * op)
     }
 }
 
+void jnl(operation * op)
+{
+    if (op->nb_operands != 1)
+        errx(1, "Error: jnl operation must have 1 operand");
+
+    if (flags[SF] == flags[OF])
+    {
+        PC = op->op0_value - 1; // PC will be incremented at the end of the loop
+    }
+    else
+    {
+        printf("\n");
+        PC++;
+    }
+
+}
+
 void interpreter(operation * op)
 {
+    static FunctionMap func_map[] = 
+    {
+        {"+mov", move},
+        {"+int", interrupt},
+        {"+sub", sub},
+        {"+xor", xor},
+        {"+lea", lea},
+        {"+add", add},
+        {"+cmp", cmp},
+        {"+jnb", jnb},
+        {"+jne", jne},
+        {"+je", je},
+        {"+jnl", jnl},
+        {"+test", test},
+        {"+push", push},
+        {"+call", _call},
+        {"+jmp", jmp},
+        {"+jmp short", jmp},
+        {"+pop", pop},
+        {"+ret", ret},
+        {"+or", or},
+        {NULL, NULL}
+    };
     char * name = op->name;
 
-    if (strcmp(name, "+mov") == 0)
-        move(op);
-    else if (strcmp(name, "+int") == 0)
+    if (strcmp(name, "+int") == 0)
     {
         if (op->op0_value == 0x20)
         {
@@ -496,38 +535,22 @@ void interpreter(operation * op)
         else
             errx(1, "Error: interrupt not supported");
     }
-    else if (strcmp(name, "+sub") == 0)
-        sub(op);
-    else if (strcmp(name, "+xor") == 0)
-        xor(op);
-    else if (strcmp(name, "+lea") == 0)
-        lea(op);
-    else if (strcmp(name, "+add") == 0)
-        add(op);
-    else if (strcmp(name, "+cmp") == 0)
-        cmp(op);
-    else if (strcmp(name, "+jnb") == 0)
-        jnb(op);
-    else if (strcmp(name, "+jne") == 0)
-        jne(op);
-    else if (strcmp(name, "+je") == 0)
-        je(op);
-    else if (strcmp(name, "+test") == 0)
-        test(op);
-    else if (strcmp(name, "+push") == 0)
-        push(op);
-    else if (strcmp(name, "+call") == 0)
-        _call(op);
-    else if (strcmp(name, "+jmp") == 0)
-        jmp(op);
-    else if (strcmp(name, "+jmp short") == 0)
-        jmp(op);
-    else if (strcmp(name, "+pop") == 0)
-        pop(op);
-    else if (strcmp(name, "+ret") == 0)
-        ret(op);
-    else if (strcmp(name, "+or") == 0)
-        or(op);
     else
-        printf(" | not done\n");
+    {
+        int i = 0;
+
+        while (func_map[i].name != NULL)
+        {
+            if (strcmp(name, func_map[i].name) == 0)
+            {
+                func_map[i].func(op);
+                break;
+            }
+
+            i++;
+        }
+
+        if (func_map[i].name == NULL)
+            errx(1, "Error: operation not supported");
+    }
 }
