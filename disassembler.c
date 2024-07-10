@@ -1059,11 +1059,11 @@ void disassembler(uint32_t text_length)
         else if (BM6(current) == CMP1)
             op = d_v_mod_reg_rm("+cmp", current);
         else if (BM6(current) == OR1)
-            op = d_v_mod_reg_rm("or", current);
+            op = d_v_mod_reg_rm("+or", current);
         else if (current == LEA)
             op = mod_reg_rm("+lea", current, 1, 1);
         else if (current == JE)
-            op = jump_short("je", current);
+            op = jump_short("+je", current);
         else if (current == JL)
             op = jump_short("jl", current);
         else if (current == JLE)

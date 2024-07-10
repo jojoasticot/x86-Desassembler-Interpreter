@@ -18,6 +18,7 @@ void interrupt(message * msg)
             break;
         case WRITE:
         {
+            registers[AX] = 0; // return value
             uint16_t msg_adress = msg->m1_p1;
             char s [msg->m1_i2 + 1];
 

@@ -346,7 +346,6 @@ void _call(operation * op)
 
     if (op->op0_type == OP_IMM)
     {
-        call_size = 3;
         printf("\n");
         registers[SP] -= 2;
         *(uint16_t *) &memory[registers[SP]] = PC;
@@ -408,6 +407,78 @@ void ret(operation * op)
     registers[SP] += 2;
 }
 
+void or(operation * op)
+{
+    if (op->nb_operands != 2)
+        errx(1, "Error: or operation must have 2 operands");
+
+    // empty comment
+    printf("\n");
+    flags[OF] = 0;
+    flags[CF] = 0;
+
+    uint16_t result = 0;
+    uint16_t val1 = 0;
+    uint16_t val2 = 0;
+
+    if (op->op0_type == OP_REG && op->op1_type == OP_REG)
+    {
+        val1 = registers[op->op0_value];
+        val2 = registers[op->op1_value];
+    }
+    else if (op->op0_type == OP_REG && op->op1_type == OP_IMM)
+    {
+        val1 = registers[op->op0_value];
+        val2 = op->op1_value;
+    }
+    else if (op->op0_type == OP_MEM && op->op1_type == OP_REG)
+    {
+        val1 = *(uint16_t *) &memory[op->op0_value];
+        val2 = registers[op->op1_value];
+    }
+    else if (op->op0_type == OP_MEM && op->op1_type == OP_IMM)
+    {
+        val1 = *(uint16_t *) &memory[op->op0_value];
+        val2 = op->op1_value;
+    }
+    else
+        errx(1, "Error: or operation not supported");
+    
+    if (op->w == 1)
+    {
+        result = val1 | val2;
+        flags[SF] = result >> 15;
+        flags[ZF] = result == 0;
+    }
+    else
+    {
+        result = (val1 & 0xff00) | (val1 | val2);
+        flags[SF] = (result & 0x0080) == 0x0080;
+        flags[ZF] = (result & 0xff) == 0;
+    }
+
+    if (op->op0_type == OP_REG)
+        registers[op->op0_value] = result;
+    else
+        *(uint16_t *) &memory[op->op0_value] = result;
+}
+
+void je(operation * op)
+{
+    if (op->nb_operands != 1)
+        errx(1, "Error: je operation must have 1 operand");
+
+    if (flags[ZF] == 1)
+    {
+        PC = op->op0_value - 1; // PC will be incremented at the end of the loop
+    }
+    else
+    {
+        printf("\n");
+        PC++;
+    }
+}
+
 void interpreter(operation * op)
 {
     char * name = op->name;
@@ -439,6 +510,8 @@ void interpreter(operation * op)
         jnb(op);
     else if (strcmp(name, "+jne") == 0)
         jne(op);
+    else if (strcmp(name, "+je") == 0)
+        je(op);
     else if (strcmp(name, "+test") == 0)
         test(op);
     else if (strcmp(name, "+push") == 0)
@@ -453,6 +526,8 @@ void interpreter(operation * op)
         pop(op);
     else if (strcmp(name, "+ret") == 0)
         ret(op);
+    else if (strcmp(name, "+or") == 0)
+        or(op);
     else
         printf(" | not done\n");
 }
