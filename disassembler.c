@@ -679,13 +679,19 @@ void in_out(char* op_name, uint8_t current, int has_port)
     PC += has_port;
 }
 
-void just_command(char * op_name, uint8_t current)
+operation * just_command(char * op_name, uint8_t current)
 {
+    operation * op = malloc(sizeof(operation));
+    op->name = op_name;
+    op->nb_operands = 0;
+
     uint8_t bytes[2];
     bytes[0] = current;
     char* string;
     asprintf(&string, "%s", op_name);
     pretty_print(bytes, 1, string);
+
+    return op;
 }
 
 operation * command_arg(char * op_name, uint8_t current)
@@ -823,7 +829,7 @@ operation * special1(uint8_t current)
     switch(flag)
     {
         case PUSH1:
-            op = call("push", 1, mod, rm, bytes);
+            op = call("+push", 1, mod, rm, bytes);
             break;
         case CALL2:
             op = call("call", 1, mod, rm, bytes);
@@ -1093,15 +1099,15 @@ void disassembler(uint32_t text_length)
         else if (current == JMP1)
             op = jump_long("+jmp", current);
         else if (current == JMP2)
-            op = jump_short("jmp short", current);
+            op = jump_short("+jmp short", current);
         else if (BM5(current) == DEC2)
             op = reg("dec", current);
         else if (BM5(current) == INC2)
             op = reg("inc", current);
         else if (current == HLT)
-            just_command("hlt", current);
+            op = just_command("hlt", current);
         else if (BM5(current) == POP2)
-            op = reg("pop", current);
+            op = reg("+pop", current);
         else if (BM6(current) == AND1)
             op = d_v_mod_reg_rm("and", current);
         else if (BM7(current) == AND3)
@@ -1121,13 +1127,13 @@ void disassembler(uint32_t text_length)
         else if (current == INT1)
             op = command_arg("+int", current);
         else if (current == RET1 || current == RET3)
-            just_command("ret", current);
+            op = just_command("+ret", current);
         else if (current == XLAT)
-            just_command("xlat", current);
+            op = just_command("xlat", current);
         else if (current == CBW)
-            just_command("cbw", current);
+            op = just_command("cbw", current);
         else if (current == CWD)
-            just_command("cwd", current);
+            op = just_command("cwd", current);
         else if (BM7(current) == SUB3)
             immediate_from_acc("sub", current);
         else if (BM7(current) == MOV2)
@@ -1147,13 +1153,13 @@ void disassembler(uint32_t text_length)
         else if (BM7(current) == CMP3)
             immediate_from_acc("cmp", current);
         else if (current == CLD)
-            just_command("cld", current);
+            op = just_command("cld", current);
         else if (BM7(current) == TEST3)
             immediate_from_acc("test", current);
         else if (BM7(current) == REP)
             rep(current);
         else if (current == STD)
-            just_command("std", current);
+            op = just_command("std", current);
         else if (BM6(current) == ADC1)
             op = d_v_mod_reg_rm("adc", current);
         else if (BM6(current) == ADC3)

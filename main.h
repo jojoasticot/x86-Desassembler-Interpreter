@@ -11,6 +11,10 @@ extern uint8_t * text;
 extern uint8_t * data;
 extern uint32_t PC;
 
+// Function prototypes
+
+void print_stack();
+
 // Flags names / indexes:
 
 #define OF 0

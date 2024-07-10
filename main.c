@@ -20,6 +20,13 @@ uint8_t * text;
 uint8_t * data;
 uint32_t PC;
 
+void print_stack()
+{
+    printf("Stack:\n");
+    for (int i = registers[SP]; i < 0xFFFF; i++)
+        printf("0x%04x: 0x%02x\n", i, memory[i]);
+}
+
 int main(int argc, char* argv[])
 {
     if (argc < 2)

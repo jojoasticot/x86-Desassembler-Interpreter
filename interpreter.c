@@ -7,6 +7,8 @@
 #include "minix/type.h"
 #include "interrupt.h"
 
+int call_size = 0;
+
 void update_reg(uint8_t reg, uint16_t value, int w)
 {
     if (w == 1)
@@ -133,7 +135,7 @@ void lea(operation * op)
         errx(1, "Error: lea operation not supported");
     
     update_reg(op->op0_value, op->op1_value, op->w);
-    printf(" ;[%4x]%x\n", op->op1_value, *(uint16_t *) &memory[op->op1_value]);
+    printf(" ;[%4x]%04x\n", op->op1_value, *(uint16_t *) &memory[op->op1_value]);
 }
 
 void add(operation * op)
@@ -321,8 +323,18 @@ void push(operation * op)
         registers[SP] -= 2;
         *(uint16_t *) &memory[registers[SP]] = reg;
     }
-    else
-        errx(1, "Error: push operation not supported");
+    else if (op->op0_type == OP_IMM)
+    {
+        printf("\n");
+        registers[SP] -= 2;
+        *(uint16_t *) &memory[registers[SP]] = op->op0_value;
+    }
+    else // OP_MEM
+    {
+        printf(" ;[%04x]%04x\n", op->op0_value, *(uint16_t *) &memory[op->op0_value]);
+        registers[SP] -= 2;
+        *(uint16_t *) &memory[registers[SP]] = *(uint16_t *) &memory[op->op0_value];
+    }
 }
 
 void _call(operation * op)
@@ -330,8 +342,11 @@ void _call(operation * op)
     if (op->nb_operands != 1)
         errx(1, "Error: call operation must have 1 operand");
 
+    call_size = 2 + op->w;
+
     if (op->op0_type == OP_IMM)
     {
+        call_size = 3;
         printf("\n");
         registers[SP] -= 2;
         *(uint16_t *) &memory[registers[SP]] = PC;
@@ -358,7 +373,39 @@ void jmp(operation * op)
     {
         errx(1, "Error: jmp operation not supported");
     }
+}
 
+void pop(operation * op)
+{
+    if (op->nb_operands != 1)
+        errx(1, "Error: pop operation must have 1 operand");
+
+    if (op->op0_type == OP_REG)
+    {
+        printf("\n");
+        registers[op->op0_value] = *(uint16_t *) &memory[registers[SP]];
+        registers[SP] += 2;
+    }
+    else if (op->op0_type == OP_MEM)
+    {
+        printf(" ;[%04x]%04x\n", op->op0_value, *(uint16_t *) &memory[op->op0_value]);
+        *(uint16_t *) &memory[op->op0_value] = *(uint16_t *) &memory[registers[SP]];
+        registers[SP] += 2;
+    }
+    else
+    {
+        errx(1, "Error: pop operation not supported");
+    }
+}
+
+void ret(operation * op)
+{
+    if (op->nb_operands != 0)
+        errx(1, "Error: ret operation must have 0 operand");
+
+    printf("\n");
+    PC = *(uint16_t *) &memory[registers[SP]] - 1 + call_size; // PC will be incremented at the end of the loop
+    registers[SP] += 2;
 }
 
 void interpreter(operation * op)
@@ -400,6 +447,12 @@ void interpreter(operation * op)
         _call(op);
     else if (strcmp(name, "+jmp") == 0)
         jmp(op);
+    else if (strcmp(name, "+jmp short") == 0)
+        jmp(op);
+    else if (strcmp(name, "+pop") == 0)
+        pop(op);
+    else if (strcmp(name, "+ret") == 0)
+        ret(op);
     else
         printf(" | not done\n");
 }
