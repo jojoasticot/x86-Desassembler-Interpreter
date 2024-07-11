@@ -490,7 +490,43 @@ void jnl(operation * op)
 
 void dec(operation * op)
 {
+    if (op->nb_operands != 1)
+        errx(1, "Error: dec operation must have 1 operand");
 
+    uint16_t value = 0;
+
+    if (op->op0_type == OP_REG)
+    {
+        printf("\n");
+        value = registers[op->op0_value];
+    }
+    else if (op->op0_type == OP_MEM)
+    {
+        printf(" ;[%04x]%04x\n", op->op0_value, *(uint16_t *) &memory[op->op0_value]);
+        value = *(uint16_t *) &memory[op->op0_value];
+    }
+    else
+        errx(1, "Error: dec operation not supported");
+
+    if (op->w == 1)
+    {
+        flags[OF] = value == 0x8000;
+        value--;
+        flags[SF] = value >> 15;
+        flags[ZF] = value == 0;
+    }
+    else
+    {
+        flags[OF] = (value & 0xff) == 0x80;
+        value = (value & 0xff00) | ((value & 0xff) - 1);
+        flags[SF] = (value & 0x0080) == 0x0080;
+        flags[ZF] = (value & 0xff) == 0;
+    }
+
+    if (op->op0_type == OP_REG)
+        registers[op->op0_value] = value;
+    else
+        *(uint16_t *) &memory[op->op0_value] = value;
 }
 
 void interpreter(operation * op)
