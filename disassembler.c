@@ -38,7 +38,7 @@ void pretty_print(uint8_t* bytes, int size, char* op)
         free(temp);
     }
 
-    printf("%04x: %-14s%s", PC, concatenated, op);
+    printf("%04x:%-14s%s", PC, concatenated, op);
     free(op);
 }
 
