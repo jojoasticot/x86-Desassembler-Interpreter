@@ -601,6 +601,15 @@ void dec(operation * op)
         *(uint16_t *) &memory[op->op0_value] = value;
 }
 
+void cbw(operation * op)
+{
+    if (op->nb_operands != 0)
+        errx(1, "Error: cbw operation must have 0 operand");
+
+    printf("\n");
+    registers[AX] = (registers[AL] & 0x80) == 0x80 ? 0xff00 | registers[AL] : 0x0000 | registers[AL];
+}
+
 void interpreter(operation * op)
 {
     static FunctionMap func_map[] = 
@@ -630,6 +639,7 @@ void interpreter(operation * op)
         {"+ret", ret},
         {"+or", or},
         {"+dec", dec},
+        {"+cbw", cbw},
         {NULL, NULL}
     };
     char * name = op->name;

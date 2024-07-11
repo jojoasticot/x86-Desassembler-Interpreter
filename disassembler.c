@@ -1131,7 +1131,7 @@ void disassembler(uint32_t text_length)
         else if (current == XLAT)
             op = just_command("xlat", current);
         else if (current == CBW)
-            op = just_command("cbw", current);
+            op = just_command("+cbw", current);
         else if (current == CWD)
             op = just_command("cwd", current);
         else if (BM7(current) == SUB3)
@@ -1144,9 +1144,9 @@ void disassembler(uint32_t text_length)
             current = text[PC + 1];
             bytes[1] = current;
             if (w == 1)
-                s_w_data("mov", MOD(current), RM(current), 0, w, bytes);
+                op = s_w_data("+mov", MOD(current), RM(current), 0, w, bytes);
             else
-                s_w_data("mov byte", MOD(current), RM(current), 0, w, bytes);
+                op = s_w_data("mov byte", MOD(current), RM(current), 0, w, bytes);
         }
         else if (BM7(current) == ADD3)
             immediate_from_acc("add", current);
