@@ -280,6 +280,78 @@ void jne(operation * op)
     }
 }
 
+void jl(operation * op)
+{
+    if (op->nb_operands != 1)
+        errx(1, "Error: jl operation must have 1 operand");
+
+    printf("\n");
+    if (flags[SF] != flags[OF])
+        PC = op->op0_value - 1; // PC will be incremented at the end of the loop
+    else
+        PC++;
+}
+
+void jle(operation * op)
+{
+    if (op->nb_operands != 1)
+        errx(1, "Error: jle operation must have 1 operand");
+
+    printf("\n");
+    if (flags[ZF] == 1 || flags[SF] != flags[OF])
+        PC = op->op0_value - 1; // PC will be incremented at the end of the loop
+    else
+        PC++;
+}
+
+void jb(operation * op)
+{
+    if (op->nb_operands != 1)
+        errx(1, "Error: jb operation must have 1 operand");
+    
+    printf("\n");
+    if (flags[CF] == 1)
+        PC = op->op0_value - 1; // PC will be incremented at the end of the loop
+    else
+        PC++;
+}
+
+void jbe(operation * op)
+{
+    if (op->nb_operands != 1)
+        errx(1, "Error: jbe operation must have 1 operand");
+    
+    printf("\n");
+    if (flags[CF] == 1 || flags[ZF] == 1)
+        PC = op->op0_value - 1; // PC will be incremented at the end of the loop
+    else
+        PC++;
+}
+
+void jo(operation * op)
+{
+    if (op->nb_operands != 1)
+        errx(1, "Error: jp operation must have 1 operand");
+    
+    printf("\n");
+    if (flags[OF] == 1)
+        PC = op->op0_value - 1; // PC will be incremented at the end of the loop
+    else
+        PC++;
+}
+
+void js(operation * op)
+{
+    if (op->nb_operands != 1)
+        errx(1, "Error: js operation must have 1 operand");
+    
+    printf("\n");
+    if (flags[SF] == 1)
+        PC = op->op0_value - 1; // PC will be incremented at the end of the loop
+    else
+        PC++;
+}
+
 void test(operation * op) 
 {
     if (op->nb_operands != 2)
@@ -543,6 +615,12 @@ void interpreter(operation * op)
         {"+jne", jne},
         {"+je", je},
         {"+jnl", jnl},
+        {"+jl", jl},
+        {"+jle", jle},
+        {"+jb", jb},
+        {"+jbe", jbe},
+        {"+jo", jo},
+        {"+js", js},
         {"+test", test},
         {"+push", push},
         {"+call", _call},

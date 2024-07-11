@@ -1065,19 +1065,19 @@ void disassembler(uint32_t text_length)
         else if (current == JE)
             op = jump_short("+je", current);
         else if (current == JL)
-            op = jump_short("jl", current);
+            op = jump_short("+jl", current);
         else if (current == JLE)
-            op = jump_short("jle", current);
+            op = jump_short("+jle", current);
         else if (current == JB)
-            op = jump_short("jb", current);
+            op = jump_short("+jb", current);
         else if (current == JBE)
-            op = jump_short("jbe", current);
+            op = jump_short("+jbe", current);
         else if (current == JP)
             op = jump_short("jp", current);
         else if (current == JO)
-            op = jump_short("jo", current);
+            op = jump_short("+jo", current);
         else if (current == JS)
-            op = jump_short("js", current);
+            op = jump_short("+js", current);
         else if (current == JNE)
             op = jump_short("+jne", current);
         else if (current == JNL)
