@@ -874,7 +874,7 @@ operation * special2(uint8_t current)
     switch(flag)
     {
         case ADD2:
-            op_name = "add";
+            op_name = "+add";
             break;
         case SSB2:
             op_name = "ssb";
@@ -1101,7 +1101,7 @@ void disassembler(uint32_t text_length)
         else if (current == JMP2)
             op = jump_short("+jmp short", current);
         else if (BM5(current) == DEC2)
-            op = reg("dec", current);
+            op = reg("+dec", current);
         else if (BM5(current) == INC2)
             op = reg("inc", current);
         else if (current == HLT)

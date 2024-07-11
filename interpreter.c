@@ -469,15 +469,11 @@ void je(operation * op)
     if (op->nb_operands != 1)
         errx(1, "Error: je operation must have 1 operand");
 
+    printf("\n");
     if (flags[ZF] == 1)
-    {
         PC = op->op0_value - 1; // PC will be incremented at the end of the loop
-    }
     else
-    {
-        printf("\n");
         PC++;
-    }
 }
 
 void jnl(operation * op)
@@ -485,15 +481,15 @@ void jnl(operation * op)
     if (op->nb_operands != 1)
         errx(1, "Error: jnl operation must have 1 operand");
 
+    printf("\n");
     if (flags[SF] == flags[OF])
-    {
         PC = op->op0_value - 1; // PC will be incremented at the end of the loop
-    }
     else
-    {
-        printf("\n");
-        PC++;
-    }
+       PC++;
+}
+
+void dec(operation * op)
+{
 
 }
 
@@ -502,7 +498,6 @@ void interpreter(operation * op)
     static FunctionMap func_map[] = 
     {
         {"+mov", move},
-        {"+int", interrupt},
         {"+sub", sub},
         {"+xor", xor},
         {"+lea", lea},
@@ -520,6 +515,7 @@ void interpreter(operation * op)
         {"+pop", pop},
         {"+ret", ret},
         {"+or", or},
+        {"+dec", dec},
         {NULL, NULL}
     };
     char * name = op->name;

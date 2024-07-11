@@ -18,7 +18,7 @@ void interrupt(message * msg)
             break;
         case WRITE:
         {
-            registers[AX] = 0; // return value
+            registers[AX] = 0;
             uint16_t msg_adress = msg->m1_p1;
             char s [msg->m1_i2 + 1];
 
@@ -27,6 +27,7 @@ void interrupt(message * msg)
             s[msg->m1_i2] = '\0';
 
             printf("<write(%i, 0x%04x, %i)%s => %i>\n", msg->m_source, msg_adress, msg->m1_i2, s, msg->m1_i2);
+            * (uint16_t*) &memory [registers[BX] + 2] = msg->m1_i2;
             break;
         }
         default:
