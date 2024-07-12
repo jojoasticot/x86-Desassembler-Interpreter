@@ -844,10 +844,10 @@ operation * special1(uint8_t current)
             op = call("jmp", 1, mod, rm, bytes);
             break;
         case INC1:
-            op = call("inc", w, mod, rm, bytes);
+            op = call("+inc", w, mod, rm, bytes);
             break;
         case DEC1:
-            op = call("dec", w, mod, rm, bytes);
+            op = call("+dec", w, mod, rm, bytes);
             break;
         default:
             printf("undefined\n");
@@ -922,7 +922,7 @@ operation * special3(uint8_t current)
             break;
         case TEST2:
             if (w == 0 && mod == 0b01)
-                op = s_w_data("test byte", mod, rm, 0, w, bytes);
+                op = s_w_data("+test byte", mod, rm, 0, w, bytes);
             else
                 op = s_w_data("+test", mod, rm, 0, w, bytes);
             break;
@@ -1103,7 +1103,7 @@ void disassembler(uint32_t text_length)
         else if (BM5(current) == DEC2)
             op = reg("+dec", current);
         else if (BM5(current) == INC2)
-            op = reg("inc", current);
+            op = reg("+inc", current);
         else if (current == HLT)
             op = just_command("hlt", current);
         else if (BM5(current) == POP2)
