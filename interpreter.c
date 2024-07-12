@@ -180,6 +180,12 @@ void add(operation * op)
         val1 = *(uint16_t *) &memory[op->op0_value];
         val2 = registers[op->op1_value];
     }
+    else if (op->op0_type == OP_REG && op->op1_type == OP_MEM)
+    {
+        print_memory(op->op1_value, op->w);
+        val1 = registers[op->op0_value];
+        val2 = *(uint16_t *) &memory[op->op1_value];
+    }
     else if (op->op0_type == OP_MEM && op->op1_type == OP_IMM)
     {
         print_memory(op->op0_value, op->w);
@@ -235,6 +241,18 @@ void cmp(operation * op)
         print_memory(op->op0_value, op->w);
         val1 = *(uint16_t *) &memory[op->op0_value];
         val2 = op->op1_value;
+    }
+    else if (op->op0_type == OP_REG && op->op1_type == OP_REG)
+    {
+        printf("\n");
+        val1 = registers[op->op0_value];
+        val2 = registers[op->op1_value];
+    }
+    else if (op->op0_type == OP_MEM && op->op1_type == OP_REG)
+    {
+        print_memory(op->op0_value, op->w);
+        val1 = *(uint16_t *) &memory[op->op0_value];
+        val2 = registers[op->op1_value];
     }
     else
     {
@@ -507,8 +525,6 @@ void or(operation * op)
     if (op->nb_operands != 2)
         errx(1, "Error: or operation must have 2 operands");
 
-    // empty comment
-    printf("\n");
     flags[OF] = 0;
     flags[CF] = 0;
 
@@ -518,21 +534,25 @@ void or(operation * op)
 
     if (op->op0_type == OP_REG && op->op1_type == OP_REG)
     {
+        printf("\n");
         val1 = registers[op->op0_value];
         val2 = registers[op->op1_value];
     }
     else if (op->op0_type == OP_REG && op->op1_type == OP_IMM)
     {
+        printf("\n");
         val1 = registers[op->op0_value];
         val2 = op->op1_value;
     }
     else if (op->op0_type == OP_MEM && op->op1_type == OP_REG)
     {
+        print_memory(op->op0_value, op->w);
         val1 = *(uint16_t *) &memory[op->op0_value];
         val2 = registers[op->op1_value];
     }
     else if (op->op0_type == OP_MEM && op->op1_type == OP_IMM)
     {
+        print_memory(op->op0_value, op->w);
         val1 = *(uint16_t *) &memory[op->op0_value];
         val2 = op->op1_value;
     }
@@ -673,7 +693,107 @@ void inc(operation * op)
         *(uint16_t *) &memory[op->op0_value] = value;
 }
 
-// TODO fix print good adress
+void and(operation * op)
+{
+    if (op->nb_operands != 2)
+        errx(1, "Error: and operation must have 2 operands");
+
+    flags[OF] = 0;
+    flags[CF] = 0;
+
+    uint16_t result = 0;
+    uint16_t val1 = 0;
+    uint16_t val2 = 0;
+
+    if (op->op0_type == OP_REG && op->op1_type == OP_REG)
+    {
+        printf("\n");
+        val1 = registers[op->op0_value];
+        val2 = registers[op->op1_value];
+    }
+    else if (op->op0_type == OP_REG && op->op1_type == OP_IMM)
+    {
+        printf("\n");
+        val1 = registers[op->op0_value];
+        val2 = op->op1_value;
+    }
+    else if (op->op0_type == OP_MEM && op->op1_type == OP_REG)
+    {
+        print_memory(op->op0_value, op->w);
+        val1 = *(uint16_t *) &memory[op->op0_value];
+        val2 = registers[op->op1_value];
+    }
+    else if (op->op0_type == OP_MEM && op->op1_type == OP_IMM)
+    {
+        print_memory(op->op0_value, op->w);
+        val1 = *(uint16_t *) &memory[op->op0_value];
+        val2 = op->op1_value;
+    }
+    else
+        errx(1, "Error: or operation not supported");
+    
+    if (op->w == 1)
+    {
+        result = val1 & val2;
+        flags[SF] = result >> 15;
+        flags[ZF] = result == 0;
+    }
+    else
+    {
+        result = (val1 & 0xff00) | (val1 & val2);
+        flags[SF] = (result & 0x0080) == 0x0080;
+        flags[ZF] = (result & 0xff) == 0;
+    }
+
+    if (op->op0_type == OP_REG)
+        registers[op->op0_value] = result;
+    else
+        *(uint16_t *) &memory[op->op0_value] = result;
+}
+
+void neg(operation * op)
+{
+    if (op->nb_operands != 1)
+        errx(1, "Error: neg operation must have 1 operand");
+
+    uint16_t value = 0;
+
+    if (op->op0_type == OP_REG)
+    {
+        printf("\n");
+        value = registers[op->op0_value];
+    }
+    else if (op->op0_type == OP_MEM)
+    {
+        print_memory(op->op0_value, op->w);
+        value = *(uint16_t *) &memory[op->op0_value];
+    }
+    else
+        errx(1, "Error: neg operation not supported");
+
+    if (op->w == 1)
+    {
+        flags[CF] = value != 0;
+        flags[OF] = value == 0x8000;
+        value = -value;
+        flags[SF] = value >> 15;
+        flags[ZF] = value == 0;
+    }
+    else
+    {
+        flags[CF] = (value & 0xff) != 0;
+        flags[OF] = (value & 0xff) == 0x80;
+        value = (value & 0xff00) | -value;
+        flags[SF] = (value & 0x0080) == 0x0080;
+        flags[ZF] = (value & 0xff) == 0;
+    }
+
+    if (op->op0_type == OP_REG)
+        registers[op->op0_value] = value;
+    else
+        *(uint16_t *) &memory[op->op0_value] = value;
+
+}
 
 void interpreter(operation * op)
 {
@@ -707,6 +827,8 @@ void interpreter(operation * op)
         {"+dec", dec},
         {"+cbw", cbw},
         {"+inc", inc},
+        {"+and", and},
+        {"+neg", neg},
         {NULL, NULL}
     };
     char * name = op->name;

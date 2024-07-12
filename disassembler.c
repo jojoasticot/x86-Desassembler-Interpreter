@@ -713,8 +713,15 @@ operation * command_arg(char * op_name, uint8_t current)
     return op;
 }
 
-void immediate_from_acc(char * op_name, uint8_t current)
+operation * immediate_from_acc(char * op_name, uint8_t current)
 {
+    operation * op = malloc(sizeof(operation));
+    op->name = op_name;
+    op->nb_operands = 2;
+    op->op0_type = OP_REG;
+    op->op0_value = AX;
+    op->op1_type = OP_IMM;
+
     uint8_t bytes[3];
     bytes[0] = current;
     int w = LASTBIT1(current);
@@ -725,17 +732,18 @@ void immediate_from_acc(char * op_name, uint8_t current)
     {
         bytes[2] = text[PC + 2];
         arg = bytes[2] << 8 | bytes[1];
-        int16_t signed_arg = (int16_t)arg;
-        asprintf(&string, "%s %s, %04x", op_name, registers_name[w][0], signed_arg);
+        asprintf(&string, "%s %s, %04x", op_name, registers_name[w][0], arg);
     }
     else
     {
         int8_t signed_arg = (int8_t)arg;
-        asprintf(&string, "%s %s, %x", op_name, registers_name[w][0], signed_arg);
+        asprintf(&string, "%s %s, %02x", op_name, registers_name[w][0], signed_arg);
     }
+    op->op1_value = arg;
     pretty_print(bytes, 2 + w, string);
     PC += 1 + w;
 
+    return op;
 }
 
 void mem_acc(char * op_name, uint8_t current, int d)
@@ -886,13 +894,13 @@ operation * special2(uint8_t current)
                 op_name = "cmp byte";
             break;
         case OR2:
-            op_name = "or";
+            op_name = "+or";
             break;
         case SUB2:
             op_name = "+sub";
             break;
         case AND2:
-            op_name = "and";
+            op_name = "+and";
             break;
         default:
             printf("undefined\n");
@@ -918,7 +926,7 @@ operation * special3(uint8_t current)
     switch(flag)
     {
         case NEG:
-            op = call("neg", w, mod, rm, bytes);
+            op = call("+neg", w, mod, rm, bytes);
             break;
         case TEST2:
             if (w == 0 && mod == 0b01)
@@ -1111,7 +1119,7 @@ void disassembler(uint32_t text_length)
         else if (BM6(current) == AND1)
             op = d_v_mod_reg_rm("and", current);
         else if (BM7(current) == AND3)
-            immediate_from_acc("and", current);
+            op = immediate_from_acc("and", current);
         else if (BM7(current) == IN1)
             in_out("in", current, 1);
         else if (BM7(current) == IN2)
@@ -1135,7 +1143,7 @@ void disassembler(uint32_t text_length)
         else if (current == CWD)
             op = just_command("cwd", current);
         else if (BM7(current) == SUB3)
-            immediate_from_acc("sub", current);
+            op = immediate_from_acc("sub", current);
         else if (BM7(current) == MOV2)
         {
             uint8_t bytes[6];
@@ -1149,13 +1157,13 @@ void disassembler(uint32_t text_length)
                 op = s_w_data("mov byte", MOD(current), RM(current), 0, w, bytes);
         }
         else if (BM7(current) == ADD3)
-            immediate_from_acc("add", current);
+            op = immediate_from_acc("add", current);
         else if (BM7(current) == CMP3)
-            immediate_from_acc("cmp", current);
+            op = immediate_from_acc("+cmp", current);
         else if (current == CLD)
             op = just_command("cld", current);
         else if (BM7(current) == TEST3)
-            immediate_from_acc("test", current);
+            op = immediate_from_acc("test", current);
         else if (BM7(current) == REP)
             rep(current);
         else if (current == STD)
@@ -1163,7 +1171,7 @@ void disassembler(uint32_t text_length)
         else if (BM6(current) == ADC1)
             op = d_v_mod_reg_rm("adc", current);
         else if (BM6(current) == ADC3)
-            immediate_from_acc("adc", current);
+            op = immediate_from_acc("adc", current);
         else if(BM7(current) == TEST1)
             op = w_mod_reg_rm("test", current);
         else if(BM7(current) == XCHG1)
@@ -1196,7 +1204,7 @@ void disassembler(uint32_t text_length)
             free(op);
         }
         else
-            printf("\n");
+            errx(1, "undefined operation");
     }
 
     if (PC == text_length - 1)
