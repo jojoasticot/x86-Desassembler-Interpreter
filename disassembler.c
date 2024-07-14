@@ -1095,7 +1095,7 @@ void disassembler(uint32_t text_length)
         else if (current == JNB)
             op = jump_short("+jnb", current);
         else if (current == JNBE)
-            op = jump_short("jnbe", current);
+            op = jump_short("+jnbe", current);
         else if (current == JNO)
             op = jump_short("jno", current);
         else if (current == JNS)
@@ -1131,7 +1131,7 @@ void disassembler(uint32_t text_length)
         else if (BM6(current) == SSB1)
             op = d_v_mod_reg_rm("sbb", current);
         else if (BM6(current) == SUB1)
-            op = d_v_mod_reg_rm("sub", current);
+            op = d_v_mod_reg_rm("+sub", current);
         else if (current == INT1)
             op = command_arg("+int", current);
         else if (current == RET1 || current == RET3)

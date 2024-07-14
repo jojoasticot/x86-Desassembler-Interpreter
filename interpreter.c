@@ -14,6 +14,8 @@ void update_reg(uint8_t reg, uint16_t value, int w)
 {
     if (w == 1)
         registers[reg] = value;
+    else if (reg >= 4)
+        registers[reg & 0x3] = (value << 8) | (registers[reg & 0x3] & 0xff) ;
     else
         registers[reg] = (registers[reg] & 0xff00) | (value & 0xff);
 }
@@ -24,6 +26,16 @@ void print_memory(uint16_t adress, int w)
         printf(" ;[%04x]%04x\n", adress, *(uint16_t *) &memory[adress]);
     else
         printf(" ;[%04x]%02x\n", adress, memory[adress]);
+}
+
+uint16_t read_reg(uint8_t reg, int w)
+{
+    if (w == 1)
+        return registers[reg];
+    
+    if (reg < 4)
+        return registers[reg] & 0xff;
+    return (registers[reg & 0x3] & 0xff00) >> 8;
 }
 
 void move(operation * op)
@@ -74,7 +86,7 @@ void sub(operation * op)
     if (op->op0_type == OP_REG && op->op1_type == OP_IMM)
     {
         printf("\n");
-        val1 = registers[op->op0_value];
+        val1 = read_reg(op->op0_value, op->w);
         val2 = op->op1_value;
     }
     else if (op->op0_type == OP_MEM && op->op1_type == OP_IMM)
@@ -82,6 +94,18 @@ void sub(operation * op)
         print_memory(op->op0_value, op->w);
         val1 = *(uint16_t *) &memory[op->op0_value];
         val2 = op->op1_value;
+    }
+    else if (op->op0_type == OP_REG && op->op1_type == OP_MEM)
+    {
+        print_memory(op->op1_value, op->w);
+        val1 = read_reg(op->op0_value, op->w);
+        val2 = *(uint16_t *) &memory[op->op1_value];
+    }
+    else if (op->op0_type == OP_REG && op->op1_type == OP_REG)
+    {
+        printf("\n");
+        val1 = read_reg(op->op0_value, op->w);
+        val2 = read_reg(op->op1_value, op->w);
     }
     else
     {
@@ -124,21 +148,36 @@ void xor(operation * op)
     flags[OF] = 0;
     flags[CF] = 0;
 
+    uint16_t result = 0;
+    uint16_t val1 = 0;
+    uint16_t val2 = 0;
+
     if (op->op0_type == OP_REG && op->op1_type == OP_REG)
     {
-        uint8_t reg1 = op->op0_value;
-        uint8_t reg2 = op->op1_value;
-
-        if (op->w == 1)
-            registers[reg1] ^= registers[reg2];
-        else
-            registers[reg1] = (registers[reg1] & 0xff00) | (registers[reg1] ^ registers[reg2]);
-
-        flags[SF] = registers[reg1] >> 15;
-        flags[ZF] = registers[reg1] == 0;
+        val1 = read_reg(op->op0_value, op->w);
+        val2 = read_reg(op->op1_value, op->w);
     }
     else
         errx(1, "Error: xor operation not supported");
+
+    if (op->w == 1)
+    {
+        result = val1 ^ val2;
+        flags[SF] = result >> 15;
+        flags[ZF] = result == 0;
+    }
+    else
+    {
+        result = (val1 & 0xff00) | (val1 ^ val2);
+        flags[SF] = (result & 0x0080) == 0x0080;
+        flags[ZF] = (result & 0xff) == 0;
+    }
+
+
+    if (op->op0_type == OP_REG)
+        update_reg(op->op0_value, result, op->w);
+    else
+        *(uint16_t *) &memory[op->op0_value] = result;
 }
 
 void lea(operation * op)
@@ -602,6 +641,18 @@ void jnl(operation * op)
        PC++;
 }
 
+void jnbe(operation * op)
+{
+    if (op->nb_operands != 1)
+        errx(1, "Error: jnbe operation must have 1 operand");
+
+    printf("\n");
+    if (flags[CF] == 0 && flags[ZF] == 0)
+        PC = op->op0_value - 1; // PC will be incremented at the end of the loop
+    else
+        PC++;
+}
+
 void dec(operation * op)
 {
     if (op->nb_operands != 1)
@@ -815,6 +866,7 @@ void interpreter(operation * op)
         {"+jbe", jbe},
         {"+jo", jo},
         {"+js", js},
+        {"+jnbe", jnbe},
         {"+test", test},
         {"+test byte", test},
         {"+push", push},
