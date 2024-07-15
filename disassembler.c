@@ -134,8 +134,18 @@ uint16_t compute_ea(uint8_t rm, int16_t disp)
     return ea;
 }
 
-void v_w_mod_rm(char* op_name, int v, int w, uint8_t mod, uint8_t rm, uint8_t* bytes) // TODO
+operation * v_w_mod_rm(char* op_name, int v, int w, uint8_t mod, uint8_t rm, uint8_t* bytes)
 {
+    operation * op = malloc(sizeof(operation));
+    op->name = op_name;
+    op->nb_operands = 2;
+    op->w = w;
+
+    op->op1_type = OP_IMM;
+    if (v == 1)
+        op->op1_value = registers[CL] & 0xFF;
+    else
+        op->op1_value = 1;
 
     uint16_t disp;
     char* string;
@@ -154,6 +164,9 @@ void v_w_mod_rm(char* op_name, int v, int w, uint8_t mod, uint8_t rm, uint8_t* b
                 asprintf(&string, "%s [%04x], cl", op_name, disp);
             else
                 asprintf(&string, "%s [%04x], 1", op_name, disp);
+            
+            op->op0_type = OP_MEM;
+            op->op0_value = disp;
 
             pretty_print(bytes, 4, string);
             PC+=3;
@@ -164,6 +177,9 @@ void v_w_mod_rm(char* op_name, int v, int w, uint8_t mod, uint8_t rm, uint8_t* b
                 asprintf(&string, "%s %s, cl", op_name, rm_string(rm, 0));
             else
                 asprintf(&string, "%s %s, 1", op_name, rm_string(rm, 0));
+            
+            op->op0_type = OP_MEM;
+            op->op0_value = compute_ea(rm, 0);
 
             pretty_print(bytes, 2, string);
             PC++;
@@ -181,6 +197,9 @@ void v_w_mod_rm(char* op_name, int v, int w, uint8_t mod, uint8_t rm, uint8_t* b
             asprintf(&string, "%s %s, [CL]", op_name, rm_string(rm, signed_disp));
         else
             asprintf(&string, "%s %s, 1", op_name, rm_string(rm, signed_disp));
+        
+        op->op0_type = OP_MEM;
+        op->op0_value = compute_ea(rm, signed_disp);
 
         pretty_print(bytes, 4, string);
         PC+=3;
@@ -195,6 +214,9 @@ void v_w_mod_rm(char* op_name, int v, int w, uint8_t mod, uint8_t rm, uint8_t* b
         else
             asprintf(&string, "%s %s, 1", op_name, rm_string(rm, disp));
 
+        op->op0_type = OP_MEM;
+        op->op0_value = compute_ea(rm, disp);
+
         pretty_print(bytes, 3, string);
         PC+=2;
         break;
@@ -203,12 +225,18 @@ void v_w_mod_rm(char* op_name, int v, int w, uint8_t mod, uint8_t rm, uint8_t* b
             asprintf(&string, "%s %s, cl", op_name, registers_name[w][rm]);
         else
             asprintf(&string, "%s %s, 1", op_name, registers_name[w][rm]);
+
+        op->op0_type = OP_REG;
+        op->op0_value = rm;
+        
         pretty_print(bytes, 2, string);
         PC++;
         break;
     default:
         break;
     }
+
+    return op;
 }
 
 operation * mod_reg_rm(char* op_name, uint8_t current, int d, int w)
@@ -843,7 +871,7 @@ operation * special1(uint8_t current)
             op = call("+push", 1, mod, rm, bytes);
             break;
         case CALL2:
-            op = call("call", 1, mod, rm, bytes);
+            op = call("+call", 1, mod, rm, bytes);
             break;
         case CALL4:
             op = call("call", 1, mod, rm, bytes);
@@ -959,7 +987,7 @@ operation * special3(uint8_t current)
 
 // 0b110100 (shl, shr, sar, rol, ror, rcl, rcr)
 
-void special4(uint8_t current) // TODO
+operation * special4(uint8_t current) // TODO
 {
     uint8_t bytes[6];
     bytes[0] = current;
@@ -971,32 +999,35 @@ void special4(uint8_t current) // TODO
     uint16_t mod = MOD(current);
     uint16_t rm = RM(current);
 
+    char * op_name = "";
+
     switch(flag)
     {
         case SHL:
-            v_w_mod_rm("shl", v, w, mod, rm, bytes);
+            op_name = "+shl";
             break;
         case SHR:
-            v_w_mod_rm("shr", v, w, mod, rm, bytes);
+            op_name = "shr";
             break;
         case SAR:
-            v_w_mod_rm("sar", v, w, mod, rm, bytes);
+            op_name = "sar";
             break;
         case ROL:
-            v_w_mod_rm("rol", v, w, mod, rm, bytes);
+            op_name = "rol";
             break;
         case ROR:
-            v_w_mod_rm("ror", v, w, mod, rm, bytes);
+            op_name = "ror";
             break;
         case RCL:
-            v_w_mod_rm("rcl", v, w, mod, rm, bytes);
+            op_name = "rcl";
             break;
         case RCR:
-            v_w_mod_rm("rcr", v, w, mod, rm, bytes);
+            op_name = "rcr";
             break;
         default:
             printf("undefined\n");
             break;
+        return v_w_mod_rm(op_name, v, w, mod, rm, bytes);
     }
 }
 
@@ -1058,7 +1089,7 @@ void disassembler(uint32_t text_length)
         else if (BM7(current) == SPECIAL3)
             op = special3(current);
         else if (BM6(current) == SPECIAL4)
-            special4(current);
+            op = special4(current);
         else if (BM6(current) == MOV1)
             op = d_v_mod_reg_rm("+mov", current);
         else if (BM4(current) == MOV3)
