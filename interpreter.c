@@ -20,6 +20,14 @@ void update_reg(uint8_t reg, uint16_t value, int w)
         registers[reg] = (registers[reg] & 0xff00) | (value & 0xff);
 }
 
+void update_memory(uint16_t adress, uint16_t value, int w)
+{
+    if (w == 1)
+        *(uint16_t *) &memory[adress] = value;
+    else
+        memory[adress] = value & 0xff;
+}
+
 void print_memory(uint16_t adress, int w)
 {
     if (w == 1)
@@ -63,12 +71,12 @@ void move(operation * op)
     else if (op->op0_type == OP_MEM && op->op1_type == OP_REG)
     {
         print_memory(op->op0_value, op->w);
-        *(uint16_t *) &memory[op->op0_value] = registers[op->op1_value];
+        update_memory(op->op0_value, read_reg(op->op1_value, op->w), op->w);
     }
     else if (op->op0_type == OP_MEM && op->op1_type == OP_IMM)
     {
         print_memory(op->op0_value, op->w);
-        *(uint16_t *) &memory[op->op0_value] = op->op1_value;
+        update_memory(op->op0_value, op->op1_value, op->w);
     }
     else
         errx(1, "Error: mov operation not supported");
@@ -135,7 +143,7 @@ void sub(operation * op)
     if (op->op0_type == OP_REG)
         update_reg(op->op0_value, result, op->w);
     else
-        *(uint16_t *) &memory[op->op0_value] = result;
+        update_memory(op->op0_value, result, op->w);
 }
 
 void xor(operation * op)
@@ -177,7 +185,7 @@ void xor(operation * op)
     if (op->op0_type == OP_REG)
         update_reg(op->op0_value, result, op->w);
     else
-        *(uint16_t *) &memory[op->op0_value] = result;
+        update_memory(op->op0_value, result, op->w);
 }
 
 void lea(operation * op)
@@ -257,7 +265,7 @@ void add(operation * op)
     if (op->op0_type == OP_REG)
         update_reg(op->op0_value, result, op->w);
     else
-        *(uint16_t *) &memory[op->op0_value] = result;
+        update_memory(op->op0_value, result, op->w);
 }
 
 void cmp(operation * op)
@@ -613,7 +621,7 @@ void or(operation * op)
     if (op->op0_type == OP_REG)
         update_reg(op->op0_value, result, op->w);
     else
-        *(uint16_t *) &memory[op->op0_value] = result;
+        update_memory(op->op0_value, result, op->w);
 }
 
 void je(operation * op)
@@ -690,7 +698,7 @@ void dec(operation * op)
     if (op->op0_type == OP_REG)
         update_reg(op->op0_value, value, op->w);
     else
-        *(uint16_t *) &memory[op->op0_value] = value;
+        update_memory(op->op0_value, value, op->w);
 }
 
 void cbw(operation * op)
@@ -740,7 +748,7 @@ void inc(operation * op)
     if (op->op0_type == OP_REG)
         update_reg(op->op0_value, value, op->w);
     else
-        *(uint16_t *) &memory[op->op0_value] = value;
+        update_memory(op->op0_value, value, op->w);
 }
 
 void and(operation * op)
@@ -798,7 +806,7 @@ void and(operation * op)
     if (op->op0_type == OP_REG)
         update_reg(op->op0_value, result, op->w);
     else
-        *(uint16_t *) &memory[op->op0_value] = result;
+        update_memory(op->op0_value, result, op->w);
 }
 
 void neg(operation * op)
@@ -841,7 +849,7 @@ void neg(operation * op)
     if (op->op0_type == OP_REG)
         update_reg(op->op0_value, value, op->w);
     else
-        *(uint16_t *) &memory[op->op0_value] = value;
+        update_memory(op->op0_value, value, op->w);
 
 }
 
