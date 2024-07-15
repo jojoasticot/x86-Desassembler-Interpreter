@@ -506,7 +506,10 @@ operation * s_w_data(char* op_name, uint8_t mod, uint8_t rm, int s, int w, uint8
         break;
     }
 
-    op->op1_value = data;
+    if (s == 1)
+        op->op1_value = (int8_t)data;
+    else
+        op->op1_value = data;
     return op;
 }
 

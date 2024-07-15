@@ -204,25 +204,25 @@ void add(operation * op)
     if (op->op0_type == OP_REG && op->op1_type == OP_REG)
     {
         printf("\n");
-        val1 = registers[op->op0_value];
-        val2 = registers[op->op1_value];
+        val1 = read_reg(op->op0_value, op->w);
+        val2 = read_reg(op->op1_value, op->w);
     }
     else if (op->op0_type == OP_REG && op->op1_type == OP_IMM)
     {
         printf("\n");
-        val1 = registers[op->op0_value];
+        val1 = read_reg(op->op0_value, op->w);
         val2 = op->op1_value;
     }
     else if (op->op0_type == OP_MEM && op->op1_type == OP_REG)
     {
         print_memory(op->op0_value, op->w);
         val1 = *(uint16_t *) &memory[op->op0_value];
-        val2 = registers[op->op1_value];
+        val2 = read_reg(op->op1_value, op->w);
     }
     else if (op->op0_type == OP_REG && op->op1_type == OP_MEM)
     {
         print_memory(op->op1_value, op->w);
-        val1 = registers[op->op0_value];
+        val1 = read_reg(op->op0_value, op->w);
         val2 = *(uint16_t *) &memory[op->op1_value];
     }
     else if (op->op0_type == OP_MEM && op->op1_type == OP_IMM)
@@ -255,7 +255,7 @@ void add(operation * op)
     }
 
     if (op->op0_type == OP_REG)
-        registers[op->op0_value] = result;
+        update_reg(op->op0_value, result, op->w);
     else
         *(uint16_t *) &memory[op->op0_value] = result;
 }
@@ -272,7 +272,7 @@ void cmp(operation * op)
     if (op->op0_type == OP_REG && op->op1_type == OP_IMM)
     {
         printf("\n");
-        val1 = registers[op->op0_value];
+        val1 = read_reg(op->op0_value, op->w);
         val2 = op->op1_value;
     }
     else if (op->op0_type == OP_MEM && op->op1_type == OP_IMM)
@@ -284,23 +284,22 @@ void cmp(operation * op)
     else if (op->op0_type == OP_REG && op->op1_type == OP_REG)
     {
         printf("\n");
-        val1 = registers[op->op0_value];
-        val2 = registers[op->op1_value];
+        val1 = read_reg(op->op0_value, op->w);
+        val2 = read_reg(op->op1_value, op->w);
     }
     else if (op->op0_type == OP_MEM && op->op1_type == OP_REG)
     {
         print_memory(op->op0_value, op->w);
         val1 = *(uint16_t *) &memory[op->op0_value];
-        val2 = registers[op->op1_value];
+        val2 = read_reg(op->op1_value, op->w);
     }
     else
-    {
         errx(1, "Error: cmp operation not supported");
-    }
 
     if (op->w == 1)
     {
         temp = val1 - val2;
+        // printf("%04x - %04x = %04x\n", val1, val2, temp);
         flags[OF] = (val1 >> 15 != val2 >> 15) && (val2 >> 15 == temp >> 15);
         flags[CF] = val1 < val2;
         flags[SF] = temp >> 15;
@@ -437,7 +436,7 @@ void test(operation * op)
     if (op->op0_type == OP_REG && op->op1_type == OP_IMM)
     {
         printf("\n");
-        val1 = registers[op->op0_value];
+        val1 = read_reg(op->op0_value, op->w);
         val2 = op->op1_value;
     }
     else if (op->op0_type == OP_MEM && op->op1_type == OP_IMM)
@@ -471,7 +470,7 @@ void push(operation * op)
     if (op->op0_type == OP_REG)
     {
         printf("\n");
-        uint16_t reg = registers[op->op0_value];
+        uint16_t reg = read_reg(op->op0_value, op->w);
         registers[SP] -= 2;
         *(uint16_t *) &memory[registers[SP]] = reg;
     }
@@ -534,7 +533,7 @@ void pop(operation * op)
     if (op->op0_type == OP_REG)
     {
         printf("\n");
-        registers[op->op0_value] = *(uint16_t *) &memory[registers[SP]];
+        update_reg(op->op0_value, *(uint16_t *) &memory[registers[SP]], op->w);
         registers[SP] += 2;
     }
     else if (op->op0_type == OP_MEM)
@@ -574,20 +573,20 @@ void or(operation * op)
     if (op->op0_type == OP_REG && op->op1_type == OP_REG)
     {
         printf("\n");
-        val1 = registers[op->op0_value];
-        val2 = registers[op->op1_value];
+        val1 = read_reg(op->op0_value, op->w);
+        val2 = read_reg(op->op1_value, op->w);
     }
     else if (op->op0_type == OP_REG && op->op1_type == OP_IMM)
     {
         printf("\n");
-        val1 = registers[op->op0_value];
+        val1 = read_reg(op->op0_value, op->w);
         val2 = op->op1_value;
     }
     else if (op->op0_type == OP_MEM && op->op1_type == OP_REG)
     {
         print_memory(op->op0_value, op->w);
         val1 = *(uint16_t *) &memory[op->op0_value];
-        val2 = registers[op->op1_value];
+        val2 = read_reg(op->op1_value, op->w);
     }
     else if (op->op0_type == OP_MEM && op->op1_type == OP_IMM)
     {
@@ -612,7 +611,7 @@ void or(operation * op)
     }
 
     if (op->op0_type == OP_REG)
-        registers[op->op0_value] = result;
+        update_reg(op->op0_value, result, op->w);
     else
         *(uint16_t *) &memory[op->op0_value] = result;
 }
@@ -663,7 +662,7 @@ void dec(operation * op)
     if (op->op0_type == OP_REG)
     {
         printf("\n");
-        value = registers[op->op0_value];
+        value = read_reg(op->op0_value, op->w);
     }
     else if (op->op0_type == OP_MEM)
     {
@@ -689,7 +688,7 @@ void dec(operation * op)
     }
 
     if (op->op0_type == OP_REG)
-        registers[op->op0_value] = value;
+        update_reg(op->op0_value, value, op->w);
     else
         *(uint16_t *) &memory[op->op0_value] = value;
 }
@@ -713,7 +712,7 @@ void inc(operation * op)
     if (op->op0_type == OP_REG)
     {
         printf("\n");
-        value = registers[op->op0_value];
+        value = read_reg(op->op0_value, op->w);
     }
     else if (op->op0_type == OP_MEM)
     {
@@ -739,7 +738,7 @@ void inc(operation * op)
     }
 
     if (op->op0_type == OP_REG)
-        registers[op->op0_value] = value;
+        update_reg(op->op0_value, value, op->w);
     else
         *(uint16_t *) &memory[op->op0_value] = value;
 }
@@ -759,20 +758,20 @@ void and(operation * op)
     if (op->op0_type == OP_REG && op->op1_type == OP_REG)
     {
         printf("\n");
-        val1 = registers[op->op0_value];
-        val2 = registers[op->op1_value];
+        val1 = read_reg(op->op0_value, op->w);
+        val2 = read_reg(op->op1_value, op->w);
     }
     else if (op->op0_type == OP_REG && op->op1_type == OP_IMM)
     {
         printf("\n");
-        val1 = registers[op->op0_value];
+        val1 = read_reg(op->op0_value, op->w);
         val2 = op->op1_value;
     }
     else if (op->op0_type == OP_MEM && op->op1_type == OP_REG)
     {
         print_memory(op->op0_value, op->w);
         val1 = *(uint16_t *) &memory[op->op0_value];
-        val2 = registers[op->op1_value];
+        val2 = read_reg(op->op1_value, op->w);
     }
     else if (op->op0_type == OP_MEM && op->op1_type == OP_IMM)
     {
@@ -797,7 +796,7 @@ void and(operation * op)
     }
 
     if (op->op0_type == OP_REG)
-        registers[op->op0_value] = result;
+        update_reg(op->op0_value, result, op->w);
     else
         *(uint16_t *) &memory[op->op0_value] = result;
 }
@@ -812,7 +811,7 @@ void neg(operation * op)
     if (op->op0_type == OP_REG)
     {
         printf("\n");
-        value = registers[op->op0_value];
+        value = read_reg(op->op0_value, op->w);
     }
     else if (op->op0_type == OP_MEM)
     {
@@ -840,7 +839,7 @@ void neg(operation * op)
     }
 
     if (op->op0_type == OP_REG)
-        registers[op->op0_value] = value;
+        update_reg(op->op0_value, value, op->w);
     else
         *(uint16_t *) &memory[op->op0_value] = value;
 
