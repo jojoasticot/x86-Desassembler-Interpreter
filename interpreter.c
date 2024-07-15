@@ -510,11 +510,15 @@ void _call(operation * op)
         *(uint16_t *) &memory[registers[SP]] = PC;
         PC = op->op0_value - 1; // PC will be incremented at the end of the loop
     }
-    else
+    else if (op->op0_type == OP_REG)
     {
         printf("\n");
-        PC += 2;
+        registers[SP] -= 2;
+        *(uint16_t *) &memory[registers[SP]] = PC;
+        PC = read_reg(op->op0_value, op->w) - 1; // PC will be incremented at the end of the loop
     }
+    else
+        errx(1, "Error: call operation not supported");
 }
 
 void jmp(operation * op)
@@ -853,6 +857,55 @@ void neg(operation * op)
 
 }
 
+void shl(operation * op)
+{
+    if (op->nb_operands != 2)
+        errx(1, "Error: shl operation must have 2 operands");
+
+    uint16_t value = 0;
+    uint16_t shift = 0;
+    uint16_t result = 0;
+
+    if (op->op0_type == OP_REG && op->op1_type == OP_IMM)
+    {
+        printf("\n");
+        value = read_reg(op->op0_value, op->w);
+        shift = op->op1_value;
+    }
+    else if (op->op0_type == OP_MEM && op->op1_type == OP_IMM)
+    {
+        print_memory(op->op0_value, op->w);
+        value = *(uint16_t *) &memory[op->op0_value];
+        shift = op->op1_value;
+    }
+    else
+        errx(1, "Error: shl operation not supported");
+
+    if (op->w == 1)
+    {
+        result = value << shift;
+        flags[CF] = (value >> (16 - shift)) & 1;
+        if (shift == 1)
+            flags[OF] = (result >> 15) != flags[CF];
+        flags[SF] = result >> 15;
+        flags[ZF] = result == 0;
+    }
+    else
+    {
+        result = (value & 0xff00) | ((value & 0xff) << shift);
+        flags[CF] = (value >> (8 - shift)) & 1;
+        if (shift == 1)
+            flags[OF] = (result >> 7) != flags[CF];
+        flags[SF] = (result & 0x0080) == 0x0080;
+        flags[ZF] = (result & 0xff) == 0;
+    }
+
+    if (op->op0_type == OP_REG)
+        update_reg(op->op0_value, result, op->w);
+    else
+        update_memory(op->op0_value, result, op->w);
+}
+
 void interpreter(operation * op)
 {
     static FunctionMap func_map[] = 
@@ -888,6 +941,7 @@ void interpreter(operation * op)
         {"+inc", inc},
         {"+and", and},
         {"+neg", neg},
+        {"+shl", shl},
         {NULL, NULL}
     };
     char * name = op->name;
@@ -919,6 +973,6 @@ void interpreter(operation * op)
         }
 
         if (func_map[i].name == NULL)
-            errx(1, "Error: operation not supported");
+            errx(1, "Error: operation %s not supported", name);
     }
 }

@@ -1027,8 +1027,8 @@ operation * special4(uint8_t current) // TODO
         default:
             printf("undefined\n");
             break;
-        return v_w_mod_rm(op_name, v, w, mod, rm, bytes);
     }
+    return v_w_mod_rm(op_name, v, w, mod, rm, bytes);
 }
 
 void read_file(FILE* file, uint32_t* text_length, uint32_t* data_length)
