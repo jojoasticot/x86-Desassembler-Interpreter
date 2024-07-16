@@ -738,7 +738,7 @@ void cbw(operation * op)
         errx(1, "Error: cbw operation must have 0 operand");
 
     printf("\n");
-    registers[AX] = (registers[AL] & 0x80) == 0x80 ? 0xff00 | registers[AL] : 0x0000 | registers[AL];
+    registers[AX] = (registers[AL] & 0x80) == 0x80 ? 0xff00 | read_reg(AL, 0) : 0x0000 | read_reg(AL, 0);
 }
 
 void inc(operation * op)
@@ -805,6 +805,12 @@ void and(operation * op)
         printf("\n");
         val1 = read_reg(op->op0_value, op->w);
         val2 = op->op1_value;
+    }
+    else if (op->op0_type == OP_REG && op->op1_type == OP_MEM)
+    {
+        print_memory(op->op1_value, op->w);
+        val1 = read_reg(op->op0_value, op->w);
+        val2 = *(uint16_t *) &memory[op->op1_value];
     }
     else if (op->op0_type == OP_MEM && op->op1_type == OP_REG)
     {
@@ -933,6 +939,15 @@ void shl(operation * op)
         update_memory(op->op0_value, result, op->w);
 }
 
+void cwd(operation * op)
+{
+    if (op->nb_operands != 0)
+        errx(1, "Error: cwd operation must have 0 operand");
+
+    printf("\n");
+    registers[DX] = (registers[AX] & 0x8000) == 0x8000 ? 0xFFFF : 0x0000;
+}
+
 void interpreter(operation * op)
 {
     static FunctionMap func_map[] = 
@@ -943,6 +958,7 @@ void interpreter(operation * op)
         {"+lea", lea},
         {"+add", add},
         {"+cmp", cmp},
+        {"+cmp byte", cmp},
         {"+jnb", jnb},
         {"+jne", jne},
         {"+je", je},
@@ -970,6 +986,7 @@ void interpreter(operation * op)
         {"+and", and},
         {"+neg", neg},
         {"+shl", shl},
+        {"+cwd", cwd},
         {NULL, NULL}
     };
     char * name = op->name;

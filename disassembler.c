@@ -923,7 +923,7 @@ operation * special2(uint8_t current)
             if (w == 1)
                 op_name = "+cmp";
             else
-                op_name = "cmp byte";
+                op_name = "+cmp byte";
             break;
         case OR2:
             op_name = "+or";
@@ -1152,7 +1152,7 @@ void disassembler(uint32_t text_length)
         else if (BM5(current) == POP2)
             op = reg("+pop", current);
         else if (BM6(current) == AND1)
-            op = d_v_mod_reg_rm("and", current);
+            op = d_v_mod_reg_rm("+and", current);
         else if (BM7(current) == AND3)
             op = immediate_from_acc("and", current);
         else if (BM7(current) == IN1)
@@ -1176,9 +1176,9 @@ void disassembler(uint32_t text_length)
         else if (current == CBW)
             op = just_command("+cbw", current);
         else if (current == CWD)
-            op = just_command("cwd", current);
+            op = just_command("+cwd", current);
         else if (BM7(current) == SUB3)
-            op = immediate_from_acc("sub", current);
+            op = immediate_from_acc("+sub", current);
         else if (BM7(current) == MOV2)
         {
             uint8_t bytes[6];
