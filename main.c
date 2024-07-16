@@ -19,27 +19,23 @@ uint8_t * text;
 uint8_t * data;
 uint32_t PC;
 
-void push_stack(uint16_t value, uint8_t size)
+void push_stack(uint16_t value, uint8_t w)
 {
-    if (size == 1)
-        memory[registers[SP]] = value;
-    else
-        * (uint16_t*) &memory[registers[SP]] = value;
-    registers[SP] -= size;
+	uint16_t sp = registers[SP] - 1 - w;
+	registers[SP] = sp;
+	if (w)
+		*(uint16_t *)(memory + sp) = value;
+	else
+		memory[sp] = value;
 }
 
 static void init_stack(int argc, char **argv)
 {
-	char *env = "PATH=/bin";
+	char *env = "PATH=/bin:/usr/bin";
 
-	uint16_t len = strlen(env) + 1;
-
-	for (int i = 0; i < argc; ++i)
-		len += strlen(argv[i]) + 1;
-
-	push_stack('\0', 1);
+	// push_stack('\0', 0);
 	for (int i = strlen(env)- 1; i >= 0; --i)
-		push_stack(env[i], 1);
+		push_stack(env[i], 0);
 
 	// get addr
 	uint16_t env_addr = registers[SP];
@@ -49,22 +45,23 @@ static void init_stack(int argc, char **argv)
 	for (int i = argc - 1; i >= 0; --i)
 	{
 		push_stack('\0', 1);
-		for (int j = strlen(argv[i]) - 1; j >= 0; --j)
-			push_stack(argv[i][j], 1);
+		for (int j = strlen(argv[i]) - 1; j >= 0; --j){
+			push_stack(argv[i][j], 0);
+        }
 		arg_addr[i] = registers[SP];
 	}
-
+    
 	// separator
-	push_stack(0, 2);
+	push_stack(0, 1);
 	// push env addr
-	push_stack(env_addr, 2);
+	push_stack(env_addr, 1);
 	// separator
-	push_stack(0, 2);
+	push_stack(0, 1);
 
 	// push each argv addr (in reverse order)
 	for (int i = argc - 1; i >= 0; --i)
-		push_stack(arg_addr[i], 2);
-	push_stack(argc, 2);
+		push_stack(arg_addr[i], 1);
+	push_stack(argc, 1);
 }
 
 int main(int argc, char* argv[])
@@ -81,7 +78,9 @@ int main(int argc, char* argv[])
     read_file(file, &text_length, &data_length);
     printf("Text length: %d\n", text_length);
     printf("Data length: %d\n", data_length);
-    // * (uint16_t*) &memory [0xffd6] = 0xffde;
+
+    argc--;
+    argv++; // dont care about ./main
 
     init_stack(argc, argv);
 
