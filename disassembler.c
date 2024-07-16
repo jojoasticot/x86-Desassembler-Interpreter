@@ -1125,7 +1125,7 @@ void disassembler(uint32_t text_length)
         else if (current == JNL)
             op = jump_short("+jnl", current);
         else if (current == JNLE)
-            op = jump_short("jnle", current);
+            op = jump_short("+jnle", current);
         else if (current == JNB)
             op = jump_short("+jnb", current);
         else if (current == JNBE)
@@ -1191,7 +1191,7 @@ void disassembler(uint32_t text_length)
                 op = s_w_data("mov byte", MOD(current), RM(current), 0, w, bytes);
         }
         else if (BM7(current) == ADD3)
-            op = immediate_from_acc("add", current);
+            op = immediate_from_acc("+add", current);
         else if (BM7(current) == CMP3)
             op = immediate_from_acc("+cmp", current);
         else if (current == CLD)

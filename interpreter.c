@@ -8,8 +8,6 @@
 #include "interrupt.h"
 #include "interpreter.h"
 
-int call_size = 0;
-
 void update_reg(uint8_t reg, uint16_t value, int w)
 {
     if (w == 1)
@@ -501,20 +499,20 @@ void _call(operation * op)
     if (op->nb_operands != 1)
         errx(1, "Error: call operation must have 1 operand");
 
-    call_size = 2 + op->w;
+    uint8_t call_size = 2 + op->w;
 
     if (op->op0_type == OP_IMM)
     {
         printf("\n");
         registers[SP] -= 2;
-        *(uint16_t *) &memory[registers[SP]] = PC;
+        *(uint16_t *) &memory[registers[SP]] = PC + call_size;
         PC = op->op0_value - 1; // PC will be incremented at the end of the loop
     }
     else if (op->op0_type == OP_REG)
     {
         printf("\n");
         registers[SP] -= 2;
-        *(uint16_t *) &memory[registers[SP]] = PC;
+        *(uint16_t *) &memory[registers[SP]] = PC + call_size;
         PC = read_reg(op->op0_value, op->w) - 1; // PC will be incremented at the end of the loop
     }
     else
@@ -566,7 +564,7 @@ void ret(operation * op)
         errx(1, "Error: ret operation must have 0 operand");
 
     printf("\n");
-    PC = *(uint16_t *) &memory[registers[SP]] - 1 + call_size; // PC will be incremented at the end of the loop
+    PC = *(uint16_t *) &memory[registers[SP]] - 1; // PC will be incremented at the end of the loop
     registers[SP] += 2;
 }
 
@@ -650,6 +648,18 @@ void jnl(operation * op)
         PC = op->op0_value - 1; // PC will be incremented at the end of the loop
     else
        PC++;
+}
+
+void jnle(operation * op)
+{
+    if (op->nb_operands != 1)
+        errx(1, "Error: jnle operation must have 1 operand");
+
+    printf("\n");
+    if (flags[ZF] == 0 && flags[SF] == flags[OF])
+        PC = op->op0_value - 1; // PC will be incremented at the end of the loop
+    else
+        PC++;
 }
 
 void jnbe(operation * op)
@@ -927,6 +937,7 @@ void interpreter(operation * op)
         {"+jo", jo},
         {"+js", js},
         {"+jnbe", jnbe},
+        {"+jnle", jnle},
         {"+test", test},
         {"+test byte", test},
         {"+push", push},
