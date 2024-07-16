@@ -299,6 +299,12 @@ void cmp(operation * op)
         val1 = *(uint16_t *) &memory[op->op0_value];
         val2 = read_reg(op->op1_value, op->w);
     }
+    else if (op->op0_type == OP_REG && op->op1_type == OP_MEM)
+    {
+        print_memory(op->op1_value, op->w);
+        val1 = read_reg(op->op0_value, op->w);
+        val2 = *(uint16_t *) &memory[op->op1_value];
+    }
     else
         errx(1, "Error: cmp operation not supported");
 
@@ -451,6 +457,12 @@ void test(operation * op)
         val1 = *(uint16_t *) &memory[op->op0_value];
         val2 = op->op1_value;
     }
+    else if (op->op0_type == OP_REG && op->op1_type == OP_REG)
+    {
+        printf("\n");
+        val1 = read_reg(op->op0_value, op->w);
+        val2 = read_reg(op->op1_value, op->w);
+    }
     else
         errx(1, "Error: test operation not supported");
 
@@ -528,6 +540,11 @@ void jmp(operation * op)
     {
         printf("\n");
         PC = op->op0_value - 1; // PC will be incremented at the end of the loop
+    }
+    else if (op->op0_type == OP_REG)
+    {
+        printf("\n");
+        PC = read_reg(op->op0_value, op->w) - 1; // PC will be incremented at the end of the loop
     }
     else
     {

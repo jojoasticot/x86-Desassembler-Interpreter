@@ -878,7 +878,7 @@ operation * special1(uint8_t current)
             op = call("call", 1, mod, rm, bytes);
             break;
         case JMP3:
-            op = call("jmp", 1, mod, rm, bytes);
+            op = call("+jmp", 1, mod, rm, bytes);
             break;
         case JMP5:
             op = call("jmp", 1, mod, rm, bytes);
@@ -1208,7 +1208,7 @@ void disassembler(uint32_t text_length)
         else if (BM6(current) == ADC3)
             op = immediate_from_acc("adc", current);
         else if(BM7(current) == TEST1)
-            op = w_mod_reg_rm("test", current);
+            op = w_mod_reg_rm("+test", current);
         else if(BM7(current) == XCHG1)
             op = w_mod_reg_rm("xchg", current);
         else if(BM6(current) == XCHG2)
