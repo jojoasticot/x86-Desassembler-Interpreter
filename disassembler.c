@@ -1220,12 +1220,19 @@ void disassembler(uint32_t text_length)
             op = reg("+xchg", current);
         else if (current == RET2)
         {
+            op = malloc(sizeof(operation));
+            op->name = "+ret";
+            op->nb_operands = 1;
+            op->op0_type = OP_IMM;
+            
             uint8_t bytes[3];
             bytes[0] = current;
             uint16_t data;
             read_data(&data, bytes, 0, 1, 1);
             char* string;
             asprintf(&string, "ret %04x", data);
+            op->op0_value = data;
+
             pretty_print(bytes, 3, string);
             PC += 2;
         }

@@ -577,12 +577,16 @@ void pop(operation * op)
 
 void ret(operation * op)
 {
-    if (op->nb_operands != 0)
-        errx(1, "Error: ret operation must have 0 operand");
-
     printf("\n");
     PC = *(uint16_t *) &memory[registers[SP]] - 1; // PC will be incremented at the end of the loop
     registers[SP] += 2;
+    if (op->nb_operands == 1)
+    {
+        if (op->op0_type == OP_IMM)
+            registers[SP] += op->op0_value;
+        else
+            errx(1, "Error: ret operation not supported");
+    }
 }
 
 void or(operation * op)
