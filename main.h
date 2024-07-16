@@ -25,7 +25,7 @@
 
 extern char* registers_name[2][8];
 extern uint16_t registers[8];
-extern uint8_t memory[0xFFFF];
+extern uint8_t memory[0x10000];
 extern uint8_t flags[4];
 extern uint8_t * text;
 extern uint8_t * data;
