@@ -499,7 +499,7 @@ void _call(operation * op)
     if (op->nb_operands != 1)
         errx(1, "Error: call operation must have 1 operand");
 
-    uint8_t call_size = 2 + op->w;
+    uint8_t call_size = 3;
 
     if (op->op0_type == OP_IMM)
     {

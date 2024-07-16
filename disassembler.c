@@ -872,6 +872,7 @@ operation * special1(uint8_t current)
             break;
         case CALL2:
             op = call("+call", 1, mod, rm, bytes);
+            PC-= 2; // so that the interpreter has no offset
             break;
         case CALL4:
             op = call("call", 1, mod, rm, bytes);
@@ -987,7 +988,7 @@ operation * special3(uint8_t current)
 
 // 0b110100 (shl, shr, sar, rol, ror, rcl, rcr)
 
-operation * special4(uint8_t current) // TODO
+operation * special4(uint8_t current)
 {
     uint8_t bytes[6];
     bytes[0] = current;
@@ -1239,6 +1240,8 @@ void disassembler(uint32_t text_length)
         }
         else
             errx(1, "undefined operation");
+
+        // printf("\nffc6: %x\n\n", memory[0xffc6]);
     }
 
     if (PC == text_length - 1)
