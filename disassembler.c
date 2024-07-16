@@ -1224,7 +1224,7 @@ void disassembler(uint32_t text_length)
             op->name = "+ret";
             op->nb_operands = 1;
             op->op0_type = OP_IMM;
-            
+
             uint8_t bytes[3];
             bytes[0] = current;
             uint16_t data;
@@ -1253,7 +1253,7 @@ void disassembler(uint32_t text_length)
         else
             errx(1, "undefined operation");
 
-        // printf("\nffc6: %x\n\n", memory[0xffc6]);
+        // printf("\nffde: %x\n\n", memory[0xffde]);
     }
 
     if (PC == text_length - 1)
