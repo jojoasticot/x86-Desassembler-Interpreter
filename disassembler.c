@@ -555,8 +555,13 @@ operation * reg(char* op_name, uint8_t current)
     op->op0_value = reg;
 
     char* string;
-    if (strcmp(op_name, "xchg") == 0)
+    if (strcmp(op_name, "+xchg") == 0)
+    {
         asprintf(&string, "%s %s, ax", op_name, registers_name[1][reg]);
+        op->nb_operands = 2;
+        op->op1_type = OP_REG;
+        op->op1_value = AX;
+    }
     else
         asprintf(&string, "%s %s", op_name, registers_name[1][reg]);
     pretty_print(bytes, 1, string);
@@ -973,7 +978,7 @@ operation * special3(uint8_t current)
             op = call("imul", w, mod, rm, bytes);
             break;
         case DIV:
-            op = call("div", w, mod, rm, bytes);
+            op = call("+div", w, mod, rm, bytes);
             break;
         case IDIV: 
             op = call("idiv", w, mod, rm, bytes);
@@ -1212,7 +1217,7 @@ void disassembler(uint32_t text_length)
         else if(BM7(current) == XCHG1)
             op = w_mod_reg_rm("xchg", current);
         else if(BM6(current) == XCHG2)
-            op = reg("xchg", current);
+            op = reg("+xchg", current);
         else if (current == RET2)
         {
             uint8_t bytes[3];

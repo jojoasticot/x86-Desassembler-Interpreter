@@ -609,6 +609,12 @@ void or(operation * op)
         val1 = read_reg(op->op0_value, op->w);
         val2 = op->op1_value;
     }
+    else if (op->op0_type == OP_REG && op->op1_type == OP_MEM)
+    {
+        print_memory(op->op1_value, op->w);
+        val1 = read_reg(op->op0_value, op->w);
+        val2 = *(uint16_t *) &memory[op->op1_value];
+    }
     else if (op->op0_type == OP_MEM && op->op1_type == OP_REG)
     {
         print_memory(op->op0_value, op->w);
@@ -948,6 +954,75 @@ void cwd(operation * op)
     registers[DX] = (registers[AX] & 0x8000) == 0x8000 ? 0xFFFF : 0x0000;
 }
 
+void _div(operation * op)
+{
+    if (op->nb_operands != 1)
+        errx(1, "Error: div operation must have 1 operand");
+
+    uint16_t divisor = 0;
+    uint16_t dividend = 0;
+    uint16_t quotient = 0;
+    uint16_t remainder = 0;
+
+    if (op->op0_type == OP_REG)
+    {
+        printf("\n");
+        divisor = read_reg(op->op0_value, op->w);
+        dividend = (registers[DX] << 16) | registers[AX];
+    }
+    else if (op->op0_type == OP_MEM)
+    {
+        print_memory(op->op0_value, op->w);
+        divisor = *(uint16_t *) &memory[op->op0_value];
+        dividend = read_reg(AX, op->w);
+    }
+    else
+        errx(1, "Error: div operation not supported");
+
+    quotient = dividend / divisor;
+    remainder = dividend % divisor;
+
+    if (op->w == 1)
+    {
+        update_reg(AX, quotient, 1);
+        update_reg(DX, remainder, 1);
+    }
+    else
+    {
+        update_reg(AL, quotient, 0);
+        update_reg(AH, remainder, 0);
+    }
+
+}
+
+void xchg(operation * op)
+{
+    if (op->nb_operands != 2)
+        errx(1, "Error: xchg operation must have 2 operands");
+
+    uint16_t val1 = 0;
+    uint16_t val2 = 0;
+
+    if (op->op0_type == OP_REG && op->op1_type == OP_REG)
+    {
+        printf("\n");
+        val1 = read_reg(op->op0_value, op->w);
+        val2 = read_reg(op->op1_value, op->w);
+        update_reg(op->op0_value, val2, op->w);
+        update_reg(op->op1_value, val1, op->w);
+    }
+    else if (op->op0_type == OP_MEM && op->op1_type == OP_REG)
+    {
+        print_memory(op->op0_value, op->w);
+        val1 = *(uint16_t *) &memory[op->op0_value];
+        val2 = read_reg(op->op1_value, op->w);
+        update_reg(op->op1_value, val1, op->w);
+        update_memory(op->op0_value, val2, op->w);
+    }
+    else
+        errx(1, "Error: xchg operation not supported");
+}
+
 void interpreter(operation * op)
 {
     static FunctionMap func_map[] = 
@@ -987,6 +1062,8 @@ void interpreter(operation * op)
         {"+neg", neg},
         {"+shl", shl},
         {"+cwd", cwd},
+        {"+div", _div},
+        {"+xchg", xchg},
         {NULL, NULL}
     };
     char * name = op->name;
