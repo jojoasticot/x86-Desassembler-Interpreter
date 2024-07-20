@@ -38,7 +38,7 @@ void pretty_print(uint8_t* bytes, int size, char* op)
         free(temp);
     }
 
-    printf("%04x:%-14s%s", PC, concatenated, op);
+    printf("%04x:%-13s%s", PC, concatenated, op);
     free(op);
 }
 
@@ -555,7 +555,7 @@ operation * reg(char* op_name, uint8_t current)
     op->op0_value = reg;
 
     char* string;
-    if (strcmp(op_name, "+xchg") == 0)
+    if (strcmp(op_name, "xchg") == 0)
     {
         asprintf(&string, "%s %s, ax", op_name, registers_name[1][reg]);
         op->nb_operands = 2;
@@ -858,7 +858,7 @@ void rep(uint8_t current)
 // Special values:
 // 0b1111111 (push, inc, dec, call, call, jmp, jmp)
 
-operation * special1(uint8_t current)
+operation *special1(uint8_t current)
 {
     operation * op = NULL;
     uint8_t bytes[6];
@@ -873,26 +873,26 @@ operation * special1(uint8_t current)
     switch(flag)
     {
         case PUSH1:
-            op = call("+push", 1, mod, rm, bytes);
+            op = call("push", 1, mod, rm, bytes);
             break;
         case CALL2:
-            op = call("+call", 1, mod, rm, bytes);
+            op = call("call", 1, mod, rm, bytes);
             PC-= 2; // so that the interpreter has no offset
             break;
         case CALL4:
             op = call("call", 1, mod, rm, bytes);
             break;
         case JMP3:
-            op = call("+jmp", 1, mod, rm, bytes);
+            op = call("jmp", 1, mod, rm, bytes);
             break;
         case JMP5:
             op = call("jmp", 1, mod, rm, bytes);
             break;
         case INC1:
-            op = call("+inc", w, mod, rm, bytes);
+            op = call("inc", w, mod, rm, bytes);
             break;
         case DEC1:
-            op = call("+dec", w, mod, rm, bytes);
+            op = call("dec", w, mod, rm, bytes);
             break;
         default:
             printf("undefined\n");
@@ -919,25 +919,25 @@ operation * special2(uint8_t current)
     switch(flag)
     {
         case ADD2:
-            op_name = "+add";
+            op_name = "add";
             break;
         case SSB2:
             op_name = "ssb";
             break;
         case CMP2:
             if (w == 1)
-                op_name = "+cmp";
+                op_name = "cmp";
             else
-                op_name = "+cmp byte";
+                op_name = "cmp byte";
             break;
         case OR2:
-            op_name = "+or";
+            op_name = "or";
             break;
         case SUB2:
-            op_name = "+sub";
+            op_name = "sub";
             break;
         case AND2:
-            op_name = "+and";
+            op_name = "and";
             break;
         default:
             printf("undefined\n");
@@ -963,13 +963,13 @@ operation * special3(uint8_t current)
     switch(flag)
     {
         case NEG:
-            op = call("+neg", w, mod, rm, bytes);
+            op = call("neg", w, mod, rm, bytes);
             break;
         case TEST2:
             if (w == 0 && mod == 0b01)
-                op = s_w_data("+test byte", mod, rm, 0, w, bytes);
+                op = s_w_data("test byte", mod, rm, 0, w, bytes);
             else
-                op = s_w_data("+test", mod, rm, 0, w, bytes);
+                op = s_w_data("test", mod, rm, 0, w, bytes);
             break;
         case MUL:
             op = call("mul", w, mod, rm, bytes);
@@ -978,7 +978,7 @@ operation * special3(uint8_t current)
             op = call("imul", w, mod, rm, bytes);
             break;
         case DIV:
-            op = call("+div", w, mod, rm, bytes);
+            op = call("div", w, mod, rm, bytes);
             break;
         case IDIV: 
             op = call("idiv", w, mod, rm, bytes);
@@ -1010,13 +1010,13 @@ operation * special4(uint8_t current)
     switch(flag)
     {
         case SHL:
-            op_name = "+shl";
+            op_name = "shl";
             break;
         case SHR:
             op_name = "shr";
             break;
         case SAR:
-            op_name = "+sar";
+            op_name = "sar";
             break;
         case ROL:
             op_name = "rol";
@@ -1097,67 +1097,67 @@ void disassembler(uint32_t text_length)
         else if (BM6(current) == SPECIAL4)
             op = special4(current);
         else if (BM6(current) == MOV1)
-            op = d_v_mod_reg_rm("+mov", current);
+            op = d_v_mod_reg_rm("mov", current);
         else if (BM4(current) == MOV3)
-            op = w_reg_data("+mov", current);
+            op = w_reg_data("mov", current);
         else if (BM6(current) == XOR1)
-            op = d_v_mod_reg_rm("+xor", current);
+            op = d_v_mod_reg_rm("xor", current);
         else if (BM6(current) == ADD1)
-            op = d_v_mod_reg_rm("+add", current);
+            op = d_v_mod_reg_rm("add", current);
         else if (BM6(current) == CMP1)
-            op = d_v_mod_reg_rm("+cmp", current);
+            op = d_v_mod_reg_rm("cmp", current);
         else if (BM6(current) == OR1)
-            op = d_v_mod_reg_rm("+or", current);
+            op = d_v_mod_reg_rm("or", current);
         else if (current == LEA)
-            op = mod_reg_rm("+lea", current, 1, 1);
+            op = mod_reg_rm("lea", current, 1, 1);
         else if (current == JE)
-            op = jump_short("+je", current);
+            op = jump_short("je", current);
         else if (current == JL)
-            op = jump_short("+jl", current);
+            op = jump_short("jl", current);
         else if (current == JLE)
-            op = jump_short("+jle", current);
+            op = jump_short("jle", current);
         else if (current == JB)
-            op = jump_short("+jb", current);
+            op = jump_short("jb", current);
         else if (current == JBE)
-            op = jump_short("+jbe", current);
+            op = jump_short("jbe", current);
         else if (current == JP)
             op = jump_short("jp", current);
         else if (current == JO)
-            op = jump_short("+jo", current);
+            op = jump_short("jo", current);
         else if (current == JS)
-            op = jump_short("+js", current);
+            op = jump_short("js", current);
         else if (current == JNE)
-            op = jump_short("+jne", current);
+            op = jump_short("jne", current);
         else if (current == JNL)
-            op = jump_short("+jnl", current);
+            op = jump_short("jnl", current);
         else if (current == JNLE)
-            op = jump_short("+jnle", current);
+            op = jump_short("jnle", current);
         else if (current == JNB)
-            op = jump_short("+jnb", current);
+            op = jump_short("jnb", current);
         else if (current == JNBE)
-            op = jump_short("+jnbe", current);
+            op = jump_short("jnbe", current);
         else if (current == JNO)
             op = jump_short("jno", current);
         else if (current == JNS)
             op = jump_long("jns", current);
         else if (BM5(current) == PUSH2)
-            op = reg("+push", current);
+            op = reg("push", current);
         else if (current == CALL1)
-            op = jump_long("+call", current);
+            op = jump_long("call", current);
         else if (current == JMP1)
-            op = jump_long("+jmp", current);
+            op = jump_long("jmp", current);
         else if (current == JMP2)
-            op = jump_short("+jmp short", current);
+            op = jump_short("jmp short", current);
         else if (BM5(current) == DEC2)
-            op = reg("+dec", current);
+            op = reg("dec", current);
         else if (BM5(current) == INC2)
-            op = reg("+inc", current);
+            op = reg("inc", current);
         else if (current == HLT)
             op = just_command("hlt", current);
         else if (BM5(current) == POP2)
-            op = reg("+pop", current);
+            op = reg("pop", current);
         else if (BM6(current) == AND1)
-            op = d_v_mod_reg_rm("+and", current);
+            op = d_v_mod_reg_rm("and", current);
         else if (BM7(current) == AND3)
             op = immediate_from_acc("and", current);
         else if (BM7(current) == IN1)
@@ -1171,19 +1171,19 @@ void disassembler(uint32_t text_length)
         else if (BM6(current) == SSB1)
             op = d_v_mod_reg_rm("sbb", current);
         else if (BM6(current) == SUB1)
-            op = d_v_mod_reg_rm("+sub", current);
+            op = d_v_mod_reg_rm("sub", current);
         else if (current == INT1)
-            op = command_arg("+int", current);
+            op = command_arg("int", current);
         else if (current == RET1 || current == RET3)
-            op = just_command("+ret", current);
+            op = just_command("ret", current);
         else if (current == XLAT)
             op = just_command("xlat", current);
         else if (current == CBW)
-            op = just_command("+cbw", current);
+            op = just_command("cbw", current);
         else if (current == CWD)
-            op = just_command("+cwd", current);
+            op = just_command("cwd", current);
         else if (BM7(current) == SUB3)
-            op = immediate_from_acc("+sub", current);
+            op = immediate_from_acc("sub", current);
         else if (BM7(current) == MOV2)
         {
             uint8_t bytes[6];
@@ -1192,14 +1192,14 @@ void disassembler(uint32_t text_length)
             current = text[PC + 1];
             bytes[1] = current;
             if (w == 1)
-                op = s_w_data("+mov", MOD(current), RM(current), 0, w, bytes);
+                op = s_w_data("mov", MOD(current), RM(current), 0, w, bytes);
             else
                 op = s_w_data("mov byte", MOD(current), RM(current), 0, w, bytes);
         }
         else if (BM7(current) == ADD3)
-            op = immediate_from_acc("+add", current);
+            op = immediate_from_acc("add", current);
         else if (BM7(current) == CMP3)
-            op = immediate_from_acc("+cmp", current);
+            op = immediate_from_acc("cmp", current);
         else if (current == CLD)
             op = just_command("cld", current);
         else if (BM7(current) == TEST3)
@@ -1213,15 +1213,15 @@ void disassembler(uint32_t text_length)
         else if (BM6(current) == ADC3)
             op = immediate_from_acc("adc", current);
         else if(BM7(current) == TEST1)
-            op = w_mod_reg_rm("+test", current);
+            op = w_mod_reg_rm("test", current);
         else if(BM7(current) == XCHG1)
             op = w_mod_reg_rm("xchg", current);
         else if(BM6(current) == XCHG2)
-            op = reg("+xchg", current);
+            op = reg("xchg", current);
         else if (current == RET2)
         {
             op = malloc(sizeof(operation));
-            op->name = "+ret";
+            op->name = "ret";
             op->nb_operands = 1;
             op->op0_type = OP_IMM;
 
