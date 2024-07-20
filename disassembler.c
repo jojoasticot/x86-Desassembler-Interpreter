@@ -1016,7 +1016,7 @@ operation * special4(uint8_t current)
             op_name = "shr";
             break;
         case SAR:
-            op_name = "sar";
+            op_name = "+sar";
             break;
         case ROL:
             op_name = "rol";

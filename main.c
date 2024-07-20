@@ -31,7 +31,7 @@ void push_stack(uint16_t value, uint8_t w)
 
 static void init_stack(int argc, char **argv)
 {
-	char *env = "PATH=/bin:/usr/bin";
+	char *env = "PATH=/usr:/usr/bin";
 
 	// push_stack('\0', 0);
 	for (int i = strlen(env)- 1; i >= 0; --i)
@@ -83,13 +83,6 @@ int main(int argc, char* argv[])
     argv++; // dont care about ./main
 
     init_stack(argc, argv);
-
-    int i = 0xFFFF;
-    while (i >= registers[SP])
-    {
-        printf("0x%04x: %02x\n", i, memory[i]);
-        i--;
-    }
 
     disassembler(text_length, data_length);
 

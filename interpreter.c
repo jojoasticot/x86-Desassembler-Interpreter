@@ -1027,6 +1027,54 @@ void xchg(operation * op)
         errx(1, "Error: xchg operation not supported");
 }
 
+void sar(operation * op)
+{
+    if (op->nb_operands != 2)
+        errx(1, "Error: sar operation must have 2 operands");
+
+    uint16_t value = 0;
+    uint16_t shift = 0;
+    uint16_t result = 0;
+
+    if (op->op0_type == OP_REG && op->op1_type == OP_IMM)
+    {
+        printf("\n");
+        value = read_reg(op->op0_value, op->w);
+        shift = op->op1_value;
+    }
+    else if (op->op0_type == OP_MEM && op->op1_type == OP_IMM)
+    {
+        print_memory(op->op0_value, op->w);
+        value = *(uint16_t *) &memory[op->op0_value];
+        shift = op->op1_value;
+    }
+    else
+        errx(1, "Error: sar operation not supported");
+
+    if (op->w == 1)
+    {
+        result = value >> shift;
+        flags[CF] = (value >> (shift - 1)) & 1;
+        flags[OF] = 0;
+        flags[SF] = result >> 15;
+        flags[ZF] = result == 0;
+    }
+    else
+    {
+        result = (value & 0xff00) | (value >> shift);
+        flags[CF] = (value >> (shift - 1)) & 1;
+        flags[OF] = 0;
+        flags[SF] = (result & 0x0080) == 0x0080;
+        flags[ZF] = (result & 0xff) == 0;
+    }
+
+    if (op->op0_type == OP_REG)
+        update_reg(op->op0_value, result, op->w);
+    else
+        update_memory(op->op0_value, result, op->w);
+
+}
+
 void interpreter(operation * op)
 {
     static FunctionMap func_map[] = 
@@ -1068,6 +1116,7 @@ void interpreter(operation * op)
         {"+cwd", cwd},
         {"+div", _div},
         {"+xchg", xchg},
+        {"+sar", sar},
         {NULL, NULL}
     };
     char * name = op->name;
