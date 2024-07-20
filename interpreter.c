@@ -1053,7 +1053,15 @@ void sar(operation * op)
 
     if (op->w == 1)
     {
+        int sign = value >> 15;
         result = value >> shift;
+
+        if (sign == 1) // sign extend
+        {
+            for (int i = 0; i < shift; i++)
+                result |= 1 << (15 - i);
+        }
+
         flags[CF] = (value >> (shift - 1)) & 1;
         flags[OF] = 0;
         flags[SF] = result >> 15;
